@@ -52,7 +52,7 @@ export function LoginPage() {
         setError(err.message || 'Login failed');
         setLoading(false);
       },
-      newPasswordRequired: (userAttributes, requiredAttrs) => {
+      newPasswordRequired: (userAttributes, _requiredAttrs) => {
         // Cognito returns FORCE_CHANGE_PASSWORD on first login with a temp password.
         // Store the CognitoUser so we can call completeNewPasswordChallenge later.
         setChallengeUser(cognitoUser);
