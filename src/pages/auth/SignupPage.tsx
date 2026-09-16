@@ -51,6 +51,12 @@ export function SignupPage() {
       return;
     }
 
+    if (!userPool) {
+      setError('Authentication is not configured for this environment.');
+      setLoading(false);
+      return;
+    }
+
     const attributeList = [
       new CognitoUserAttribute({ Name: 'email', Value: formData.email }),
       new CognitoUserAttribute({ Name: 'custom:firstName', Value: formData.firstName }),

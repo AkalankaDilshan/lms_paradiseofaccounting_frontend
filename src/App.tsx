@@ -14,7 +14,10 @@ import { QuestionBank } from './pages/teacher/QuestionBank';
 import { QuizBuilder } from './pages/teacher/QuizBuilder';
 import { StudentManagement } from './pages/teacher/StudentManagement';
 import { QuizAnalytics } from './pages/teacher/QuizAnalytics';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+
+const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: ReactNode, allowedRoles: string[] }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -70,11 +73,13 @@ function AppRoutes() {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="lms-theme">
-      <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

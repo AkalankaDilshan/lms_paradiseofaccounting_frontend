@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeToggle } from '../theme-toggle';
@@ -25,6 +25,15 @@ export function AppLayout() {
         { name: 'Students', path: '/teacher/students', icon: Users },
       ];
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen]);
+
   const displayName = user?.username || (isStudent ? 'Student' : 'Teacher');
   const closeMobile = () => setMobileOpen(false);
   const nav = (
@@ -44,5 +53,5 @@ export function AppLayout() {
     </>
   );
 
-  return <div className="min-h-screen bg-[#09090b] text-foreground dark:bg-[#09090b] md:flex"><aside className={`hidden border-r border-white/10 bg-[#101014] transition-all lg:flex lg:min-h-screen lg:flex-col ${collapsed ? 'lg:w-[84px]' : 'lg:w-64'}`}>{nav}</aside>{mobileOpen && <div className="fixed inset-0 z-50 lg:hidden"><button className="absolute inset-0 bg-black/70" onClick={closeMobile} aria-label="Close navigation" /><aside className="relative flex h-full w-72 flex-col border-r border-white/10 bg-[#101014]">{nav}</aside></div>}<main className="min-w-0 flex-1"><header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 bg-[#09090b]/90 px-4 backdrop-blur-md md:px-8"><div className="flex items-center gap-3"><button className="rounded-lg p-2 text-muted-foreground hover:bg-white/10 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu className="h-5 w-5" /></button><span className="text-sm text-muted-foreground">{isStudent ? 'Student workspace' : 'Teacher workspace'}</span></div><ThemeToggle /></header><div className="mx-auto max-w-[1440px] p-4 md:p-8"><Outlet /></div></main></div>;
+  return <div className="min-h-screen bg-[#09090b] text-foreground dark:bg-[#09090b] md:flex"><aside className={`hidden border-r border-white/10 bg-[#101014] transition-all lg:flex lg:min-h-screen lg:flex-col ${collapsed ? 'lg:w-[84px]' : 'lg:w-64'}`}>{nav}</aside>{mobileOpen && <div className="fixed inset-0 z-50 lg:hidden"><button className="absolute inset-0 bg-black/70" onClick={closeMobile} aria-label="Close navigation" /><aside className="relative flex h-full w-72 flex-col border-r border-white/10 bg-[#101014]">{nav}</aside></div>}<main className="min-w-0 flex-1"><header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/10 bg-[#09090b]/90 px-4 backdrop-blur-md md:px-8"><div className="flex items-center gap-3"><button className="rounded-lg p-2 text-muted-foreground hover:bg-white/10 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation" aria-expanded={mobileOpen}><Menu className="h-5 w-5" /></button><span className="text-sm text-muted-foreground">{isStudent ? 'Student workspace' : 'Teacher workspace'}</span></div><ThemeToggle /></header><div className="mx-auto max-w-[1440px] p-4 md:p-8"><Outlet /></div></main></div>;
 }

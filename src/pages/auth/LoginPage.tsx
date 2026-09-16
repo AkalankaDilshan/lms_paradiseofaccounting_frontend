@@ -31,6 +31,12 @@ export function LoginPage() {
       return;
     }
 
+    if (!userPool) {
+      setError('Authentication is not configured for this environment.');
+      setLoading(false);
+      return;
+    }
+
     const authDetails = new AuthenticationDetails({
       Username: email,
       Password: password,
@@ -199,4 +205,3 @@ export function LoginPage() {
     </div>
   );
 }
-

@@ -29,6 +29,12 @@ export function ForgotPasswordPage() {
       return;
     }
 
+    if (!userPool) {
+      setError('Authentication is not configured for this environment.');
+      setLoading(false);
+      return;
+    }
+
     const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
     cognitoUser.forgotPassword({
       onSuccess: () => {
@@ -51,6 +57,12 @@ export function ForgotPasswordPage() {
       setTimeout(() => {
         navigate('/login');
       }, 500);
+      return;
+    }
+
+    if (!userPool) {
+      setError('Authentication is not configured for this environment.');
+      setLoading(false);
       return;
     }
 
