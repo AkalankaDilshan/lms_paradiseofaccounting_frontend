@@ -1,0 +1,30 @@
+# Implementation Tasks
+
+- [x] Part 1 — Critical Fixes
+  - [x] Fix 1.1 — QuizAttempt.tsx: question shape mismatch
+  - [x] Fix 1.2 — QuizResults.tsx: response shape mismatch
+  - [x] Fix 1.3 — StudentDashboard.tsx: quiz list shape mismatch
+  - [x] Fix 1.4 — StudentTrend.tsx: userId vs username
+  - [x] Fix 1.5 — LoginPage.tsx: navigation after login
+  - [x] Fix 1.6 — Mock data in mockClient.ts
+- [x] Part 2 — Missing Core Pages
+  - [x] 2.1 — Student Profile Page
+  - [x] 2.2 — Quiz List Page (Teacher)
+  - [x] 2.3 — Quiz Builder
+  - [x] 2.4 — Question Form Page (Teacher)
+  - [x] 2.5 — Question Bank
+  - [x] 2.6 — Student Management
+- [x] Part 3 — New Features
+  - [x] 3.1 — Announcements / Notice Board
+  - [x] 3.2 — Payment Records Management
+  - [x] 3.3 — Study Materials / Resource Library
+  - [x] 3.4 — Teacher To-Do List
+  - [x] 3.5 — Class Attendance Tracker
+  - [x] 3.6 — Broadcast Messages / Inbox
+  - [x] 3.7 — Student Dashboard Enhancements
+  - [x] 3.8 — Teacher Dashboard Enhancements
+  - [x] 3.9 — Student Progress Report (PDF)
+- [x] Part 4 — Navigation / App Shell Updates
+  - [x] 4.1 — AppLayout.tsx sidebar nav update
+  - [x] 4.2 — App.tsx Route Declarations
+- [x] Final Build & TypeScript Check

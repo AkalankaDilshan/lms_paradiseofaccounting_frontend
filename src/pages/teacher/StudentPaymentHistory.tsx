@@ -4,10 +4,9 @@ import { apiClient } from '../../api/client';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { ArrowLeft, Printer, CheckCircle2, Clock, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {

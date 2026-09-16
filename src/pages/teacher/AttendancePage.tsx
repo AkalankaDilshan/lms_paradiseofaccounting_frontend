@@ -27,7 +27,7 @@ export function AttendancePage() {
     },
   });
 
-  const { data: existingRecord } = useQuery({
+  useQuery({
     queryKey: ['attendance', date, selectedGroup],
     queryFn: async () => {
       const res = await apiClient.get('/attendance', { params: { date, groupId: selectedGroup } });

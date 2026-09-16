@@ -1,26 +1,28 @@
 import { useMemo, useState } from 'react';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, CreditCard, Megaphone, Send } from 'lucide-react';
 import { Avatar } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Input } from '../../components/ui/input';
+import { Textarea } from '../../components/ui/textarea';
 import { Sparkline } from '../../components/dashboard/sparkline';
+import { TodoWidget } from '../../components/TodoWidget';
+import { useNavigate } from 'react-router-dom';
 import {
-  attemptsThisMonth,
   attemptsThisYear,
   miniKpis,
   monthlySeries,
   recentAttempts,
-  weakTopics,
 } from '../../data/admin-dashboard';
 import { cn } from '../../lib/utils';
+import { apiClient } from '../../api/client';
 
 const PAGE_SIZE = 5;
 const upColor = 'hsl(142 70% 45%)';
 const downColor = 'hsl(346 77% 55%)';
-const tealColor = 'hsl(173 58% 40%)';
 
 const statusClasses = {
   Completed: 'bg-emerald-500/12 text-emerald-400',
@@ -52,15 +54,19 @@ function Trend({ delta, good }: { delta: number; good: boolean }) {
 }
 
 export function TeacherDashboard() {
+  const navigate = useNavigate();
   const [yearView, setYearView] = useState<'this' | 'last'>('this');
-  const [compareView, setCompareView] = useState<'this' | 'last'>('this');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
+  
+  // Quick Post state
+  const [postTitle, setPostTitle] = useState('');
+  const [postBody, setPostBody] = useState('');
+  const [posting, setPosting] = useState(false);
 
   const pageCount = Math.ceil(recentAttempts.length / PAGE_SIZE);
   const visible = recentAttempts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const allVisibleSelected = visible.every((row) => selected.includes(row.id));
-  const maxWrong = weakTopics[0]?.wrongRate ?? 1;
 
   const areaData = useMemo(
     () => monthlySeries.map((item) => ({ month: item.month, value: yearView === 'this' ? item.thisYear : item.lastYear })),
@@ -75,6 +81,35 @@ export function TeacherDashboard() {
   const toggleRow = (id: string, checked: boolean) => {
     setSelected((current) => (checked ? [...current, id] : current.filter((item) => item !== id)));
   };
+
+  const handleQuickPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postTitle || !postBody) return;
+    setPosting(true);
+    try {
+      await apiClient.post('/announcements', {
+        title: postTitle,
+        body: postBody,
+        targetGroups: ['ALL'],
+        isPinned: false,
+        status: 'published'
+      });
+      setPostTitle('');
+      setPostBody('');
+      alert('Announcement posted successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to post announcement.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  // Mock payment data
+  const totalStudents = 75;
+  const paidCount = 48;
+  const collectionRate = (paidCount / totalStudents) * 100;
+  const paymentColor = collectionRate < 50 ? 'text-rose-500' : collectionRate < 80 ? 'text-amber-500' : 'text-emerald-500';
 
   return (
     <div className="space-y-5">
@@ -91,27 +126,35 @@ export function TeacherDashboard() {
               <Sparkline data={attemptsThisYear.spark} color={upColor} />
             </CardContent>
           </Card>
-          <Card className="py-4">
+          
+          {/* Payment Overview Widget */}
+          <Card className="py-4 border-l-4 border-l-primary cursor-pointer hover:bg-muted/10 transition-colors" onClick={() => navigate('/teacher/payments')}>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{attemptsThisMonth.label}</p>
-              <div className="flex items-end justify-between gap-3">
-                <p className="text-3xl font-semibold tracking-tight tabular-nums">{attemptsThisMonth.value}</p>
-                <Trend delta={attemptsThisMonth.delta} good={attemptsThisMonth.delta >= 0} />
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Pending Payments</p>
+                <CreditCard className="w-4 h-4 text-primary" />
               </div>
-              <p className="text-xs text-muted-foreground">{attemptsThisMonth.vs}</p>
-              <Sparkline data={attemptsThisMonth.spark} color={upColor} className="h-10" />
-              <div className="flex items-center justify-between border-t border-border pt-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">{attemptsThisMonth.extraLabel}</p>
-                  <p className="text-sm font-semibold tabular-nums">{attemptsThisMonth.extraValue}</p>
-                </div>
-                <Trend delta={attemptsThisMonth.extraDelta} good />
+              <div className="flex items-end justify-between gap-3">
+                <p className="text-3xl font-semibold tracking-tight tabular-nums">{totalStudents - paidCount}</p>
+                <span className={cn('inline-flex items-center gap-1 text-xs font-medium', paymentColor)}>
+                  {collectionRate.toFixed(1)}% Collected
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className={cn("h-full rounded-full transition-all", 
+                  collectionRate < 50 ? 'bg-rose-500' : collectionRate < 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                )} style={{ width: `${collectionRate}%` }} />
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <p className="text-xs text-muted-foreground">This month's collection</p>
+                <p className="text-sm font-semibold tabular-nums">{paidCount}/{totalStudents} Paid</p>
               </div>
             </CardContent>
           </Card>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
-          {miniKpis.map((kpi) => {
+        
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
+          {miniKpis.slice(0, 2).map((kpi) => {
             const good = kpi.positiveIsGood ? kpi.delta >= 0 : kpi.delta <= 0;
             return (
               <Card key={kpi.label} className="py-3">
@@ -159,54 +202,47 @@ export function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="py-4">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
-            <div>
-              <CardTitle>Attempts vs completions</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">Started papers against papers submitted.</p>
-            </div>
-            <Segmented value={compareView} onChange={setCompareView} />
-          </CardHeader>
-          <CardContent className="h-64 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlySeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
-                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="attempts" name="Attempts" fill={compareView === 'this' ? tealColor : 'hsl(var(--muted-foreground))'} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completions" name="Completions" fill={upColor} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Quick Post & Mini KPIs */}
+        <div className="flex flex-col gap-4">
+          <Card className="flex-1">
+            <CardHeader className="pb-3 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg">Quick Announcement</CardTitle>
+              </div>
+              <CardDescription>Broadcast a message to all students.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <form onSubmit={handleQuickPost} className="space-y-3">
+                <Input 
+                  placeholder="Subject" 
+                  value={postTitle} 
+                  onChange={e => setPostTitle(e.target.value)} 
+                  required 
+                />
+                <Textarea 
+                  placeholder="Message body (Supports Sinhala)..." 
+                  className="resize-none font-sinhala h-24"
+                  value={postBody}
+                  onChange={e => setPostBody(e.target.value)}
+                  required
+                />
+                <div className="flex justify-end">
+                  <Button type="submit" size="sm" disabled={posting || !postTitle || !postBody}>
+                    <Send className="w-3.5 h-3.5 mr-2" />
+                    {posting ? 'Posting...' : 'Post to All Groups'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.3fr)]">
-        <Card className="py-4">
-          <CardHeader className="pb-2">
-            <CardTitle>Weak topics</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">Highest incorrect rates this month.</p>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-2">
-            {weakTopics.map((topic) => (
-              <div key={topic.topic} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{topic.topic}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {topic.group} · {topic.attempts} attempts
-                    </p>
-                  </div>
-                  <span className="text-sm font-medium text-emerald-400 tabular-nums">{topic.wrongRate}%</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(topic.wrongRate / maxWrong) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="h-full">
+          <TodoWidget />
+        </div>
 
         <Card className="gap-0 py-0">
           <CardHeader className="border-b border-border py-4">
