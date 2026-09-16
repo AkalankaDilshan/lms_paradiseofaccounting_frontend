@@ -103,8 +103,9 @@ export function LoginPage() {
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
       {/* Left side - Form */}
       <div className="flex flex-col p-8 lg:p-12 xl:p-16">
-        <div className="mb-12">
+        <div className="mb-12 flex items-center gap-3">
           <img src="/logoIcon.png" alt="Asela LMS" className="h-10 w-10 rounded-lg object-cover" />
+          <span className="font-semibold text-xl tracking-tight">Accounting with Asela</span>
         </div>
         
         <div className="mx-auto w-full max-w-sm flex-1 flex flex-col justify-center mb-12">
@@ -222,13 +223,19 @@ export function LoginPage() {
       </div>
 
       {/* Right side - Background Image */}
-      <div className="hidden lg:block relative bg-muted h-full w-full">
+      <div className="hidden lg:block relative bg-muted h-full w-full overflow-hidden">
         <img 
           src="/auth-bg.jpg" 
           alt="Abstract 3D pattern" 
           className="absolute inset-0 h-full w-full object-cover" 
         />
         <div className="absolute inset-0 bg-black/40" />
+        {/* Floating Green Blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[20%] left-[20%] w-48 h-48 bg-green-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float"></div>
+          <div className="absolute top-[40%] right-[20%] w-64 h-64 bg-emerald-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-[20%] left-[30%] w-56 h-56 bg-teal-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
+        </div>
       </div>
     </div>
   );
