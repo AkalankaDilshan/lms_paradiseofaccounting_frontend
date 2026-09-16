@@ -69,7 +69,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="lms-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="lms-theme">
       <AuthProvider>
         <Router>
           <AppRoutes />

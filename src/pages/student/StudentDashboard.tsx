@@ -1,92 +1,34 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Avatar } from '../../components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Clock, Calendar, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, ArrowUpRight, BookOpen, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Leaderboard } from '../../components/Leaderboard';
 
-interface QuizItem {
-  id: string;
-  title: string;
-  openAt: string;
-  closeAt: string;
-  duration: number;
-  maxAttempts: number;
-  attemptsUsed: number;
-}
+interface QuizItem { id: string; title: string; openAt: string; closeAt: string; duration: number; maxAttempts: number; attemptsUsed: number; }
+const recentAttempts = [
+  { id: 'att-1', title: 'Partnership Accounts — Paper 1', date: '14 Sep 2026', score: 86, status: 'Completed' },
+  { id: 'att-2', title: 'Depreciation Methods — Revision Paper', date: '11 Sep 2026', score: 72, status: 'Completed' },
+  { id: 'att-3', title: 'Control Accounts — Grade 13', date: '08 Sep 2026', score: 91, status: 'Completed' },
+];
 
 export function StudentDashboard() {
   const navigate = useNavigate();
-  
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['studentQuizzes'],
-    queryFn: async () => {
-      const res = await apiClient.get('/quizzes');
-      return res.data.items as QuizItem[];
-    }
-  });
+  const { data, isLoading, error } = useQuery({ queryKey: ['studentQuizzes'], queryFn: async () => (await apiClient.get('/quizzes')).data.items as QuizItem[] });
+  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-40 rounded-2xl bg-white/5" /><div className="h-24 rounded-2xl bg-white/5" /></div>;
+  if (error) return <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center text-rose-400">Failed to load your dashboard.</div>;
+  const activeQuizzes = data?.filter((quiz) => new Date(quiz.closeAt) > new Date()) || [];
+  const nextQuiz = activeQuizzes[0];
 
-  if (isLoading) return <div className="flex justify-center p-8">Loading quizzes...</div>;
-  if (error) return <div className="text-destructive p-4 text-center">Failed to load quizzes.</div>;
-
-  const activeQuizzes = data?.filter(q => new Date(q.closeAt) > new Date()) || [];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Your Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Available assignments and quizzes.</p>
-      </div>
-
-      {activeQuizzes.length === 0 ? (
-        <Card className="bg-muted/50 border-dashed">
-          <CardContent className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-            <CheckCircle2 className="w-12 h-12 text-success/50 mb-4" />
-            <p>You're all caught up! No active quizzes available.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeQuizzes.map((quiz) => {
-            const isClosed = new Date() > new Date(quiz.closeAt);
-            const isMaxedOut = quiz.attemptsUsed >= quiz.maxAttempts;
-            const disabled = isClosed || isMaxedOut;
-
-            return (
-              <Card key={quiz.id} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-lg line-clamp-2">{quiz.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-4">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4 mr-2 text-accent" />
-                    {quiz.duration} mins
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 mr-2 text-primary/70" />
-                    Due: {new Date(quiz.closeAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center justify-between text-sm pt-2 border-t">
-                    <span className="text-muted-foreground">Attempts:</span>
-                    <span className={`font-medium ${isMaxedOut ? 'text-destructive' : 'text-foreground'}`}>
-                      {quiz.attemptsUsed} / {quiz.maxAttempts}
-                    </span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    disabled={disabled}
-                    onClick={() => navigate(`/student/quizzes/${quiz.id}/attempt`)}
-                  >
-                    {isMaxedOut ? 'Completed' : 'Start Quiz'}
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="space-y-6">
+    <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/25 via-[#181525] to-[#111116] p-6 md:p-8"><div className="absolute -right-10 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div><p className="mb-2 text-sm font-medium text-primary-foreground/70">Monday, 16 September 2026</p><h1 className="text-3xl font-bold tracking-tight md:text-4xl">Welcome back, Akalanka.</h1><p className="mt-2 max-w-lg text-sm text-muted-foreground">Keep your momentum going. You are <span className="font-semibold text-foreground">4.2%</span> above your class average this month.</p></div><div className="flex items-center gap-3"><Avatar id="student-akalanka" name="Akalanka Dilshan" size="lg" className="h-14 w-14" /><div><p className="font-semibold">Grade 13</p><p className="text-sm text-muted-foreground">Hatton group</p></div></div></div></section>
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3"><StatCard icon={Target} label="My average score" value="83.6%" trend="+4.2%" tone="text-primary" /><StatCard icon={CheckCircle2} label="Quizzes completed" value="18" trend="of 24 assigned" tone="text-emerald-400" /><StatCard icon={BookOpen} label="Class position" value="#07" trend="top 10% of class" tone="text-amber-400" /></section>
+    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"><Card className="overflow-hidden border-primary/20 bg-primary/5"><CardHeader className="flex flex-row items-start justify-between border-b border-white/10"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Next quiz window</p><CardTitle className="mt-2 text-xl">{nextQuiz?.title || 'No upcoming quizzes'}</CardTitle></div><CalendarDays className="h-5 w-5 text-primary" /></CardHeader><CardContent className="grid gap-5 p-6 sm:grid-cols-3"><Metric icon={Clock3} label="Duration" value={nextQuiz ? `${nextQuiz.duration} minutes` : '—'} /><Metric icon={CalendarDays} label="Closes" value={nextQuiz ? new Date(nextQuiz.closeAt).toLocaleDateString() : '—'} /><div className="sm:text-right"><Button disabled={!nextQuiz || nextQuiz.attemptsUsed >= nextQuiz.maxAttempts} onClick={() => nextQuiz && navigate(`/student/quizzes/${nextQuiz.id}/attempt`)}>{nextQuiz?.attemptsUsed ? 'Continue quiz' : 'Start quiz'}<ArrowUpRight className="ml-2 h-4 w-4" /></Button></div></CardContent></Card><Card><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Your progress</CardTitle></CardHeader><CardContent className="space-y-4 p-6"><div className="flex items-end justify-between"><span className="text-sm text-muted-foreground">Syllabus completed</span><span className="text-2xl font-bold">74%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[74%] rounded-full bg-primary" /></div><p className="text-xs text-muted-foreground">You are on track for your September target.</p></CardContent></Card></section>
+    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"><Card><CardHeader className="flex flex-row items-center justify-between border-b border-white/10"><div><CardTitle className="text-lg">My recent attempts</CardTitle><p className="mt-1 text-sm text-muted-foreground">Your latest accounting quiz results.</p></div><Button variant="ghost" size="sm" onClick={() => navigate('/student/trend')}>View history <ArrowUpRight className="ml-1 h-3 w-3" /></Button></CardHeader><CardContent className="p-0"><div className="divide-y divide-white/10">{recentAttempts.map((attempt) => <div key={attempt.id} className="flex items-center justify-between gap-4 px-6 py-4"><div className="flex min-w-0 items-center gap-3"><Avatar id={attempt.id} name={attempt.title} size="sm" className="rounded-lg" /><div className="min-w-0"><p className="truncate text-sm font-medium">{attempt.title}</p><p className="text-xs text-muted-foreground">{attempt.date}</p></div></div><div className="text-right"><p className="font-bold text-emerald-400">{attempt.score}%</p><p className="text-xs text-muted-foreground">{attempt.status}</p></div></div>)}</div></CardContent></Card><Leaderboard quizId="q1" /></section>
+  </div>;
 }
+
+function StatCard({ icon: Icon, label, value, trend, tone }: { icon: typeof Target; label: string; value: string; trend: string; tone: string }) { return <Card><CardContent className="p-5"><div className="mb-4 flex items-center justify-between"><span className="text-sm text-muted-foreground">{label}</span><Icon className={`h-5 w-5 ${tone}`} /></div><p className="text-3xl font-bold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted-foreground">{trend}</p></CardContent></Card>; }
+function Metric({ icon: Icon, label, value }: { icon: typeof Clock3; label: string; value: string }) { return <div className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{label}</p><p className="text-sm font-semibold">{value}</p></div></div>; }

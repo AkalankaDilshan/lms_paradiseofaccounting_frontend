@@ -2,49 +2,8 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { CalendarClock, FileQuestion, Users } from 'lucide-react';
 
 export function QuizBuilder() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Quiz Builder</h1>
-        <p className="text-muted-foreground mt-1">Create a new quiz and assign it to student groups.</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Quiz Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Quiz Title</Label>
-            <Input placeholder="e.g., Chapter 1: Introduction to Accounting" />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Duration (Minutes)</Label>
-              <Input type="number" placeholder="30" />
-            </div>
-            <div className="space-y-2">
-              <Label>Max Attempts</Label>
-              <Input type="number" placeholder="3" />
-            </div>
-          </div>
-
-          <div className="space-y-2 pt-4">
-            <Label>Schedule (Open/Close window)</Label>
-            {/* Calendar component would go here */}
-            <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground text-sm">
-              Calendar Picker Component
-            </div>
-          </div>
-
-          <div className="pt-4 flex justify-end">
-            <Button>Save Quiz</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <div className="space-y-6"><div><p className="text-sm font-medium text-primary">Content studio</p><h1 className="text-3xl font-bold tracking-tight">Quiz builder</h1><p className="mt-1 text-muted-foreground">Create an assessment and assign it to the right accounting groups.</p></div><div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"><Card><CardHeader className="border-b border-white/10"><CardTitle>Quiz details</CardTitle></CardHeader><CardContent className="space-y-6 p-6"><div className="space-y-2"><Label>Quiz title</Label><Input placeholder="e.g. Partnership Accounts — Paper 1" /></div><div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>Duration (minutes)</Label><Input type="number" placeholder="45" /></div><div className="space-y-2"><Label>Maximum attempts</Label><Input type="number" placeholder="2" /></div></div><div className="space-y-2"><Label>Schedule</Label><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Input type="datetime-local" /><Input type="datetime-local" /></div><p className="text-xs text-muted-foreground">Students can access this quiz only inside the open and close window.</p></div><div className="space-y-2"><Label>Question selection</Label><div className="flex items-center justify-between rounded-xl border border-dashed border-white/20 p-4"><div className="flex items-center gap-3"><FileQuestion className="h-5 w-5 text-primary" /><div><p className="text-sm font-medium">Choose from question bank</p><p className="text-xs text-muted-foreground">450 questions available</p></div></div><Button variant="outline" size="sm">Browse</Button></div></div><div className="flex justify-end border-t border-white/10 pt-5"><Button>Save quiz</Button></div></CardContent></Card><div className="space-y-6"><Card><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Assignment</CardTitle></CardHeader><CardContent className="space-y-3 p-5">{['Grade 12 · Ginigathhena', 'Grade 13 · Hatton', 'Revision · Nawalapitiya'].map((group) => <label key={group} className="flex items-center gap-3 rounded-lg border border-white/10 p-3 text-sm"><input type="checkbox" className="accent-primary" defaultChecked />{group}</label>)}</CardContent></Card><Card><CardContent className="space-y-4 p-5"><div className="flex gap-3"><CalendarClock className="h-5 w-5 text-amber-400" /><div><p className="text-sm font-medium">Scheduling tip</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Open revision windows during the last 48 hours before class to give students flexible practice time.</p></div></div><div className="flex gap-3"><Users className="h-5 w-5 text-emerald-400" /><div><p className="text-sm font-medium">75 students</p><p className="mt-1 text-xs text-muted-foreground">will receive this assignment.</p></div></div></CardContent></Card></div></div></div>;
 }
