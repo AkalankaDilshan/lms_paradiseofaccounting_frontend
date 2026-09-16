@@ -102,13 +102,22 @@ export function LoginPage() {
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
       {/* Left side - Form */}
-      <div className="flex flex-col p-8 lg:p-12 xl:p-16">
-        <div className="mb-12 flex items-center gap-3">
+      <div className="relative flex flex-col p-8 lg:p-12 xl:p-16 overflow-hidden">
+        {/* Floating Blobs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-[10%] left-[10%] w-56 h-56 bg-purple-500/15 rounded-full mix-blend-screen filter blur-3xl animate-float"></div>
+          <div className="absolute top-[30%] right-[10%] w-64 h-64 bg-amber-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '1.5s' }}></div>
+          <div className="absolute bottom-[20%] left-[15%] w-56 h-56 bg-green-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
+          <div className="absolute bottom-[10%] right-[20%] w-48 h-48 bg-fuchsia-500/15 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4.5s' }}></div>
+          <div className="absolute top-[60%] left-[40%] w-56 h-56 bg-emerald-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2.5s' }}></div>
+        </div>
+
+        <div className="relative z-10 mb-12 flex items-center gap-3">
           <img src="/logoIcon.png" alt="Asela LMS" className="h-10 w-10 rounded-lg object-cover" />
           <span className="font-semibold text-xl tracking-tight">Accounting with Asela</span>
         </div>
         
-        <div className="mx-auto w-full max-w-sm flex-1 flex flex-col justify-center mb-12">
+        <div className="relative z-10 mx-auto w-full max-w-sm flex-1 flex flex-col justify-center mb-12">
           {challengeUser ? (
             <>
               <h1 className="text-3xl font-bold tracking-tight mb-2">Set New Password</h1>
@@ -217,7 +226,7 @@ export function LoginPage() {
           )}
         </div>
 
-        <div className="text-center text-sm text-muted-foreground">
+        <div className="relative z-10 text-center text-sm text-muted-foreground">
           © 2026 Paradise of Accounting
         </div>
       </div>
@@ -230,12 +239,6 @@ export function LoginPage() {
           className="absolute inset-0 h-full w-full object-cover" 
         />
         <div className="absolute inset-0 bg-black/40" />
-        {/* Floating Green Blobs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[20%] left-[20%] w-48 h-48 bg-green-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float"></div>
-          <div className="absolute top-[40%] right-[20%] w-64 h-64 bg-emerald-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute bottom-[20%] left-[30%] w-56 h-56 bg-teal-500/20 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
-        </div>
       </div>
     </div>
   );
