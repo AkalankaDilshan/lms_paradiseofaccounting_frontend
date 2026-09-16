@@ -8,6 +8,8 @@ import {
   ClipboardList,
   Home,
   LogOut,
+  Mail,
+  Megaphone,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -15,6 +17,9 @@ import {
   Settings,
   Users,
   X,
+  Library,
+  DollarSign,
+  CalendarCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import type { DemoRole } from '../../contexts/AuthContext';
@@ -35,10 +40,31 @@ const teacherNav = [
   {
     label: 'Learning',
     items: [
+      { name: 'Quizzes', path: '/teacher/quizzes', icon: ClipboardList },
       { name: 'Quiz builder', path: '/teacher/quizzes/new', icon: ClipboardList },
       { name: 'Question bank', path: '/teacher/questions', icon: BookOpen },
-      { name: 'Students', path: '/teacher/students', icon: Users },
       { name: 'Analytics', path: '/teacher/analytics', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Students',
+    items: [
+      { name: 'Students', path: '/teacher/students', icon: Users },
+      { name: 'Attendance', path: '/teacher/attendance', icon: CalendarCheck },
+      { name: 'Payments', path: '/teacher/payments', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { name: 'Announcements', path: '/teacher/announcements', icon: Megaphone },
+      { name: 'Messages', path: '/teacher/messages', icon: Mail },
+    ],
+  },
+  {
+    label: 'Resources',
+    items: [
+      { name: 'Materials', path: '/teacher/materials', icon: Library },
     ],
   },
 ];
@@ -51,18 +77,35 @@ const studentNav = [
       { name: 'Performance', path: '/student/trend', icon: BarChart3 },
     ],
   },
+  {
+    label: 'Class',
+    items: [
+      { name: 'Announcements', path: '/student/announcements', icon: Megaphone },
+      { name: 'Messages', path: '/student/messages', icon: Mail },
+      { name: 'Materials', path: '/student/materials', icon: Library },
+    ],
+  },
 ];
 
 const crumbs: Record<string, string> = {
   '/teacher': 'Overview',
+  '/teacher/quizzes': 'Quizzes',
   '/teacher/quizzes/new': 'Quiz builder',
   '/teacher/questions': 'Question bank',
   '/teacher/students': 'Students',
   '/teacher/analytics': 'Analytics',
   '/teacher/settings': 'Settings',
+  '/teacher/attendance': 'Attendance',
+  '/teacher/payments': 'Payments',
+  '/teacher/announcements': 'Announcements',
+  '/teacher/messages': 'Messages',
+  '/teacher/materials': 'Materials',
   '/student': 'Overview',
   '/student/trend': 'Performance',
-  '/student/profile': 'Settings',
+  '/student/profile': 'My Profile',
+  '/student/announcements': 'Announcements',
+  '/student/messages': 'Messages',
+  '/student/materials': 'Study Materials',
 };
 
 export function AppLayout() {
