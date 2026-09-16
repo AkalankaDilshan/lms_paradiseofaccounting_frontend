@@ -16,18 +16,21 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [challengeUser, setChallengeUser] = useState<CognitoUser | null>(null);
   const [requiredAttributes, setRequiredAttributes] = useState<Record<string, string>>({});
-  const { refreshSession } = useAuth();
+  const { refreshSession, signInDemo, isDemo } = useAuth();
   const navigate = useNavigate();
+
+  const enterDemo = (role: 'Student' | 'TA') => {
+    signInDemo(role);
+    navigate(role === 'Student' ? '/student' : '/teacher');
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    if (import.meta.env.VITE_USE_MOCK) {
-      setTimeout(() => {
-        refreshSession().then(() => navigate('/student'));
-      }, 500);
+    if (import.meta.env.VITE_USE_MOCK || isDemo) {
+      enterDemo('TA');
       return;
     }
 
@@ -50,7 +53,6 @@ export function LoginPage() {
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: () => {
         refreshSession().then(() => {
-          // Navigating to default route. ProtectedRoute will bounce them correctly based on role.
           navigate('/');
         });
       },
@@ -58,17 +60,12 @@ export function LoginPage() {
         setError(err.message || 'Login failed');
         setLoading(false);
       },
-      newPasswordRequired: (userAttributes, _requiredAttrs) => {
-        // Cognito returns FORCE_CHANGE_PASSWORD on first login with a temp password.
-        // Store the CognitoUser so we can call completeNewPasswordChallenge later.
+      newPasswordRequired: (userAttributes) => {
         setChallengeUser(cognitoUser);
-
-        // Remove non-writable attributes returned by Cognito
         const attrs = { ...userAttributes };
         delete attrs.email_verified;
         delete attrs.phone_number_verified;
         setRequiredAttributes(attrs);
-
         setLoading(false);
       },
     });
@@ -103,16 +100,15 @@ export function LoginPage() {
     });
   };
 
-  // ---------- New password challenge UI ----------
   if (challengeUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted p-4">
+      <div className="flex min-h-svh items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-xl">A</div>
+            <div className="mb-4 flex justify-center">
+              <img src="/logoIcon.png" alt="Asela LMS" className="h-12 w-12 rounded-xl object-cover" />
             </div>
-            <CardTitle className="text-2xl text-center">Set New Password</CardTitle>
+            <CardTitle className="text-center text-2xl">Set New Password</CardTitle>
             <CardDescription className="text-center">
               Your temporary password must be changed before you can continue.
             </CardDescription>
@@ -139,7 +135,7 @@ export function LoginPage() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmNewPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+              {error && <p className="text-sm font-medium text-destructive">{error}</p>}
               <Button className="w-full" type="submit" disabled={loading}>
                 {loading ? 'Updating...' : 'Set Password & Continue'}
               </Button>
@@ -150,53 +146,61 @@ export function LoginPage() {
     );
   }
 
-  // ---------- Normal login UI ----------
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted p-4">
+    <div className="flex min-h-svh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            {/* Logo could go here */}
-            <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-xl">A</div>
+          <div className="mb-4 flex justify-center">
+            <img src="/logoIcon.png" alt="Asela LMS" className="h-12 w-12 rounded-xl object-cover" />
           </div>
-          <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+          <CardTitle className="text-center text-2xl">Welcome back</CardTitle>
           <CardDescription className="text-center">
-            Enter your email to sign in to your account
+            {isDemo ? 'Open a demo workspace or sign in with your account.' : 'Enter your email to sign in to your account'}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isDemo && (
+            <div className="mb-5 grid grid-cols-2 gap-2">
+              <Button type="button" onClick={() => enterDemo('TA')}>
+                Teacher demo
+              </Button>
+              <Button type="button" variant="outline" onClick={() => enterDemo('Student')}>
+                Student demo
+              </Button>
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="m@example.com" 
-                required 
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required={!isDemo}
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
+              <Input
+                id="password"
+                type="password"
+                required={!isDemo}
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               />
             </div>
-            {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
             <Button className="w-full" type="submit" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <div className="text-sm text-center text-muted-foreground w-full">
+          <div className="w-full text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
+            <Link to="/signup" className="font-medium text-primary hover:underline">
               Sign up
             </Link>
           </div>

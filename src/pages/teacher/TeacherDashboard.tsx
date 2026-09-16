@@ -1,19 +1,305 @@
+import { useMemo, useState } from 'react';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { Avatar } from '../../components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { ArrowUpRight, CheckCircle2, CircleAlert, ClipboardCheck, FileQuestion, Users } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Sparkline } from '../../components/dashboard/sparkline';
+import {
+  attemptsThisMonth,
+  attemptsThisYear,
+  miniKpis,
+  monthlySeries,
+  recentAttempts,
+  weakTopics,
+} from '../../data/admin-dashboard';
+import { cn } from '../../lib/utils';
 
-const activeStudents = [{ id: 'student-akalanka', name: 'Akalanka Dilshan', group: 'Grade 13 · Hatton' }, { id: 'student-kasun', name: 'Kasun Perera', group: 'Grade 12 · Ginigathhena' }, { id: 'student-nimal', name: 'Nimal Silva', group: 'Revision · Nawalapitiya' }, { id: 'student-tharushi', name: 'Tharushi Fernando', group: 'Grade 13 · Hatton' }, { id: 'student-sachini', name: 'Sachini Bandara', group: 'Grade 12 · Ginigathhena' }];
-const quizAttempts = [{ id: 'ATT-1048', studentId: 'student-kasun', student: 'Kasun Perera', quiz: 'Partnership Accounts — Paper 1', score: '86%', status: 'Completed' }, { id: 'ATT-1047', studentId: 'student-tharushi', student: 'Tharushi Fernando', quiz: 'Depreciation Methods — Revision Paper', score: '72%', status: 'Completed' }, { id: 'ATT-1046', studentId: 'student-nimal', student: 'Nimal Silva', quiz: 'Control Accounts — Grade 13', score: '—', status: 'In progress' }, { id: 'ATT-1045', studentId: 'student-sachini', student: 'Sachini Bandara', quiz: 'Final Accounts — Paper 2', score: '—', status: 'Missed' }];
-const statusClasses: Record<string, string> = { Completed: 'bg-emerald-500/15 text-emerald-400', 'In progress': 'bg-amber-500/15 text-amber-400', Missed: 'bg-rose-500/15 text-rose-400' };
+const PAGE_SIZE = 5;
+const upColor = 'hsl(142 70% 45%)';
+const downColor = 'hsl(346 77% 55%)';
+const tealColor = 'hsl(173 58% 40%)';
+
+const statusClasses = {
+  Completed: 'bg-emerald-500/12 text-emerald-400',
+  'In progress': 'bg-amber-500/12 text-amber-400',
+  Missed: 'bg-rose-500/12 text-rose-400',
+} as const;
+
+const tooltipStyle = {
+  background: 'hsl(var(--popover))',
+  border: '1px solid hsl(var(--border))',
+  borderRadius: 8,
+  fontSize: 12,
+  color: 'hsl(var(--foreground))',
+};
+
+function formatDelta(delta: number) {
+  const prefix = delta > 0 ? '+' : '';
+  return `${prefix}${delta.toFixed(1)}%`;
+}
+
+function Trend({ delta, good }: { delta: number; good: boolean }) {
+  const Icon = delta >= 0 ? TrendingUp : TrendingDown;
+  return (
+    <span className={cn('inline-flex items-center gap-1 text-xs font-medium', good ? 'text-emerald-400' : 'text-rose-400')}>
+      <Icon className="size-3.5" />
+      {formatDelta(delta)}
+    </span>
+  );
+}
 
 export function TeacherDashboard() {
-  return <div className="space-y-6">
-    <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/25 via-[#181525] to-[#111116] p-6 md:p-8"><div className="absolute -right-10 -top-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl" /><div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center"><div><p className="mb-2 text-sm text-muted-foreground">Tuesday, 16 September 2026</p><h1 className="text-3xl font-bold tracking-tight md:text-4xl">Welcome back, Teacher.</h1><p className="mt-2 max-w-xl text-sm text-muted-foreground">Your classes are moving well. <span className="font-semibold text-foreground">24 students</span> completed a quiz this week, up 12% from last week.</p></div><Button variant="secondary" className="w-fit">View class report <ArrowUpRight className="ml-2 h-4 w-4" /></Button></div></section>
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><Stat icon={Users} label="Active students" value="75" trend="+8 this month" color="text-primary" /><Stat icon={ClipboardCheck} label="Quiz attempts" value="248" trend="+18% this week" color="text-emerald-400" /><Stat icon={FileQuestion} label="Questions in bank" value="450" trend="32 awaiting review" color="text-amber-400" /><Stat icon={CheckCircle2} label="Average class score" value="78.4%" trend="+4.2% from last month" color="text-sky-400" /></section>
-    <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"><Card><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Attempts by group</CardTitle><p className="text-sm text-muted-foreground">Distribution across your active learning groups.</p></CardHeader><CardContent className="flex flex-col items-center gap-8 p-6 sm:flex-row"><div className="relative h-44 w-44 shrink-0 rounded-full" style={{ background: 'conic-gradient(#7c5cfc 0 46%, #f5a524 46% 78%, #16a34a 78% 100%)' }}><div className="absolute inset-7 flex items-center justify-center rounded-full bg-card text-center"><div><p className="text-3xl font-bold">248</p><p className="text-xs text-muted-foreground">attempts</p></div></div></div><div className="w-full space-y-4">{[['Grade 12', '114 attempts', 'bg-primary', '46%'], ['Grade 13', '79 attempts', 'bg-amber-400', '32%'], ['Revision', '55 attempts', 'bg-emerald-500', '22%']].map(([label, value, color, percentage]) => <div key={label} className="flex items-center justify-between gap-3 text-sm"><div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-full ${color}`} /><span>{label}</span></div><span className="text-muted-foreground">{value} <span className="ml-2 font-medium text-foreground">{percentage}</span></span></div>)}</div></CardContent></Card><Card><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Upcoming quiz windows</CardTitle></CardHeader><CardContent className="space-y-5 p-6">{[['Partnership Accounts', '18 Sep · 09:00–11:00', 'Grade 13'], ['Final Accounts — Paper 2', '20 Sep · 08:30–10:00', 'Grade 12'], ['Revision Mock Paper', '24 Sep · All day', 'Revision']].map(([title, date, group]) => <div key={title} className="flex gap-3"><div className="mt-1 h-2 w-2 rounded-full bg-primary ring-4 ring-primary/10" /><div><p className="text-sm font-medium">{title}</p><p className="mt-1 text-xs text-muted-foreground">{date}</p><span className="mt-2 inline-block rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-muted-foreground">{group}</span></div></div>)}</CardContent></Card></section>
-    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]"><Card className="overflow-hidden"><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Recent quiz attempts</CardTitle><p className="text-sm text-muted-foreground">Latest submissions across Grade 12, Grade 13, and Revision.</p></CardHeader><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Attempt</TableHead><TableHead>Student</TableHead><TableHead className="hidden md:table-cell">Quiz</TableHead><TableHead className="text-right">Score</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{quizAttempts.map((attempt) => <TableRow key={attempt.id}><TableCell className="font-mono text-xs text-muted-foreground">{attempt.id}</TableCell><TableCell><div className="flex items-center gap-2"><Avatar id={attempt.studentId} name={attempt.student} size="sm" /><span className="whitespace-nowrap font-medium">{attempt.student}</span></div></TableCell><TableCell className="hidden max-w-[240px] truncate md:table-cell">{attempt.quiz}</TableCell><TableCell className="text-right font-semibold">{attempt.score}</TableCell><TableCell><span className={`rounded-full px-2 py-1 text-xs font-medium ${statusClasses[attempt.status]}`}>{attempt.status}</span></TableCell></TableRow>)}</TableBody></Table></div></CardContent></Card><div className="space-y-6"><Card><CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Recently active</CardTitle></CardHeader><CardContent className="space-y-4 p-5"><div className="flex items-center pl-2">{activeStudents.map((student, index) => <Avatar key={student.id} id={student.id} name={student.name} size="lg" className={index === 0 ? '' : '-ml-3'} />)}<span className="ml-3 text-sm font-medium text-muted-foreground">+12</span></div>{activeStudents.slice(0, 2).map((student) => <div key={student.id} className="flex items-center gap-3"><Avatar id={student.id} name={student.name} size="sm" /><div><p className="text-sm font-medium">{student.name}</p><p className="text-xs text-muted-foreground">{student.group}</p></div></div>)}</CardContent></Card><Card><CardHeader className="flex flex-row items-center gap-2 border-b border-white/10"><CircleAlert className="h-4 w-4 text-amber-400" /><CardTitle className="text-lg">Flagged questions</CardTitle></CardHeader><CardContent className="space-y-4 p-5">{[['Bank reconciliation', '62% incorrect'], ['Control accounts', '48% incorrect'], ['Depreciation methods', '41% incorrect']].map(([question, rate]) => <div key={question} className="flex items-start justify-between gap-3"><p className="text-sm">{question}</p><span className="whitespace-nowrap text-xs font-medium text-rose-400">{rate}</span></div>)}</CardContent></Card></div></section>
-  </div>;
+  const [yearView, setYearView] = useState<'this' | 'last'>('this');
+  const [compareView, setCompareView] = useState<'this' | 'last'>('this');
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const pageCount = Math.ceil(recentAttempts.length / PAGE_SIZE);
+  const visible = recentAttempts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const allVisibleSelected = visible.every((row) => selected.includes(row.id));
+  const maxWrong = weakTopics[0]?.wrongRate ?? 1;
+
+  const areaData = useMemo(
+    () => monthlySeries.map((item) => ({ month: item.month, value: yearView === 'this' ? item.thisYear : item.lastYear })),
+    [yearView],
+  );
+
+  const toggleAll = (checked: boolean) => {
+    const ids = visible.map((row) => row.id);
+    setSelected((current) => (checked ? Array.from(new Set([...current, ...ids])) : current.filter((id) => !ids.includes(id))));
+  };
+
+  const toggleRow = (id: string, checked: boolean) => {
+    setSelected((current) => (checked ? [...current, id] : current.filter((item) => item !== id)));
+  };
+
+  return (
+    <div className="space-y-5">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.7fr)]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card className="py-4">
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">{attemptsThisYear.label}</p>
+              <div className="flex items-end justify-between gap-3">
+                <p className="text-3xl font-semibold tracking-tight tabular-nums">{attemptsThisYear.value}</p>
+                <Trend delta={attemptsThisYear.delta} good={attemptsThisYear.delta >= 0} />
+              </div>
+              <p className="text-xs text-muted-foreground">{attemptsThisYear.vs}</p>
+              <Sparkline data={attemptsThisYear.spark} color={upColor} />
+            </CardContent>
+          </Card>
+          <Card className="py-4">
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">{attemptsThisMonth.label}</p>
+              <div className="flex items-end justify-between gap-3">
+                <p className="text-3xl font-semibold tracking-tight tabular-nums">{attemptsThisMonth.value}</p>
+                <Trend delta={attemptsThisMonth.delta} good={attemptsThisMonth.delta >= 0} />
+              </div>
+              <p className="text-xs text-muted-foreground">{attemptsThisMonth.vs}</p>
+              <Sparkline data={attemptsThisMonth.spark} color={upColor} className="h-10" />
+              <div className="flex items-center justify-between border-t border-border pt-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">{attemptsThisMonth.extraLabel}</p>
+                  <p className="text-sm font-semibold tabular-nums">{attemptsThisMonth.extraValue}</p>
+                </div>
+                <Trend delta={attemptsThisMonth.extraDelta} good />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1">
+          {miniKpis.map((kpi) => {
+            const good = kpi.positiveIsGood ? kpi.delta >= 0 : kpi.delta <= 0;
+            return (
+              <Card key={kpi.label} className="py-3">
+                <CardContent className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{kpi.value}</p>
+                    <div className="mt-1">
+                      <Trend delta={kpi.delta} good={good} />
+                    </div>
+                  </div>
+                  <Sparkline data={kpi.spark} color={good ? upColor : downColor} className="h-12 w-24 shrink-0 sm:w-28" />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Card className="py-4">
+          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
+            <div>
+              <CardTitle>Attempts overview</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Quiz attempts across the academic year.</p>
+            </div>
+            <Segmented value={yearView} onChange={setYearView} />
+          </CardHeader>
+          <CardContent className="h-64 pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={areaData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="attemptsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={upColor} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={upColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Area type="monotone" dataKey="value" name="Attempts" stroke={upColor} strokeWidth={2} fill="url(#attemptsFill)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="py-4">
+          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
+            <div>
+              <CardTitle>Attempts vs completions</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Started papers against papers submitted.</p>
+            </div>
+            <Segmented value={compareView} onChange={setCompareView} />
+          </CardHeader>
+          <CardContent className="h-64 pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlySeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="attempts" name="Attempts" fill={compareView === 'this' ? tealColor : 'hsl(var(--muted-foreground))'} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completions" name="Completions" fill={upColor} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.3fr)]">
+        <Card className="py-4">
+          <CardHeader className="pb-2">
+            <CardTitle>Weak topics</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">Highest incorrect rates this month.</p>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-2">
+            {weakTopics.map((topic) => (
+              <div key={topic.topic} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{topic.topic}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {topic.group} · {topic.attempts} attempts
+                    </p>
+                  </div>
+                  <span className="text-sm font-medium text-emerald-400 tabular-nums">{topic.wrongRate}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(topic.wrongRate / maxWrong) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-0">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle>Recent quiz attempts</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">Latest submissions across your learning groups.</p>
+          </CardHeader>
+          <CardContent className="px-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10 pl-4">
+                    <Checkbox checked={allVisibleSelected} onCheckedChange={(value) => toggleAll(value === true)} aria-label="Select page" />
+                  </TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead className="hidden md:table-cell">Quiz</TableHead>
+                  <TableHead className="hidden lg:table-cell">Group</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden sm:table-cell pr-4">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.map((attempt) => (
+                  <TableRow key={attempt.id} data-state={selected.includes(attempt.id) ? 'selected' : undefined}>
+                    <TableCell className="pl-4">
+                      <Checkbox
+                        checked={selected.includes(attempt.id)}
+                        onCheckedChange={(value) => toggleRow(attempt.id, value === true)}
+                        aria-label={`Select ${attempt.student}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar id={attempt.studentId} name={attempt.student} size="sm" />
+                        <span className="font-medium">{attempt.student}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden max-w-[220px] truncate md:table-cell">{attempt.quiz}</TableCell>
+                    <TableCell className="hidden text-muted-foreground lg:table-cell">{attempt.group}</TableCell>
+                    <TableCell className="font-medium tabular-nums">{attempt.score}</TableCell>
+                    <TableCell>
+                      <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', statusClasses[attempt.status])}>
+                        {attempt.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden text-muted-foreground sm:table-cell pr-4">{attempt.date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, recentAttempts.length)} of {recentAttempts.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon-sm" disabled={page === 0} onClick={() => setPage((value) => value - 1)} aria-label="Previous page">
+                  <ChevronLeft />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={page >= pageCount - 1}
+                  onClick={() => setPage((value) => value + 1)}
+                  aria-label="Next page"
+                >
+                  <ChevronRight />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
 }
-function Stat({ icon: Icon, label, value, trend, color }: { icon: typeof Users; label: string; value: string; trend: string; color: string }) { return <Card><CardContent className="p-5"><div className="mb-4 flex items-center justify-between"><span className="text-sm text-muted-foreground">{label}</span><Icon className={`h-5 w-5 ${color}`} /></div><p className="text-3xl font-bold">{value}</p><p className="mt-1 text-xs text-muted-foreground">{trend}</p></CardContent></Card>; }
+
+function Segmented({ value, onChange }: { value: 'this' | 'last'; onChange: (value: 'this' | 'last') => void }) {
+  return (
+    <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+      <button
+        type="button"
+        className={cn('rounded-md px-2.5 py-1 font-medium text-muted-foreground', value === 'this' && 'bg-background text-foreground shadow-sm')}
+        onClick={() => onChange('this')}
+      >
+        This Year
+      </button>
+      <button
+        type="button"
+        className={cn('rounded-md px-2.5 py-1 font-medium text-muted-foreground', value === 'last' && 'bg-background text-foreground shadow-sm')}
+        onClick={() => onChange('last')}
+      >
+        Last Year
+      </button>
+    </div>
+  );
+}
