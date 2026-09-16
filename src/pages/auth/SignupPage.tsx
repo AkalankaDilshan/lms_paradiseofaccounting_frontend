@@ -5,7 +5,6 @@ import { userPool } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 
 export function SignupPage() {
   const [formData, setFormData] = useState({
@@ -81,116 +80,131 @@ export function SignupPage() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  if (success) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-muted p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <div className="mx-auto bg-success/10 p-3 rounded-full mb-4 w-16 h-16 flex items-center justify-center">
-              <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <CardTitle>Account Created!</CardTitle>
-            <CardDescription>
-              Please check your email to verify your account before logging in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            
-            {/* Android PWA Install */}
-            {deferredPrompt && !isStandalone && (
-              <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
-                <h3 className="font-semibold text-primary mb-2">Install App for Best Experience</h3>
-                <p className="text-sm text-muted-foreground mb-4">Add this LMS to your home screen for faster access and fullscreen view.</p>
-                <Button onClick={handleInstallClick} className="w-full">Install App</Button>
-              </div>
-            )}
-
-            {/* iOS PWA Install */}
-            {showIosPrompt && (
-              <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg text-left">
-                <h3 className="font-semibold text-primary mb-2 text-center">Install on iOS</h3>
-                <p className="text-sm text-muted-foreground mb-2">To install this app on your iPhone/iPad:</p>
-                <ol className="text-sm text-muted-foreground list-decimal pl-4 space-y-1">
-                  <li>Tap the <strong>Share</strong> icon in Safari's bottom bar.</li>
-                  <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
-                </ol>
-              </div>
-            )}
-
-            <Link to="/login">
-              <Button variant="outline" className="w-full mt-4">Go to Login</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted p-4 py-12">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join the Accounting with Asela platform.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" required value={formData.firstName} onChange={handleChange} />
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-background">
+      {/* Left side - Form */}
+      <div className="flex flex-col p-8 lg:p-12 xl:p-16">
+        <div className="mb-8">
+          <img src="/logoIcon.png" alt="Asela LMS" className="h-10 w-10 rounded-lg object-cover" />
+        </div>
+        
+        <div className="mx-auto w-full max-w-md flex-1 flex flex-col justify-center mb-12">
+          {success ? (
+            <>
+              <div className="mx-auto bg-success/10 p-3 rounded-full mb-6 w-16 h-16 flex items-center justify-center">
+                <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" required value={formData.lastName} onChange={handleChange} />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={formData.email} onChange={handleChange} />
-            </div>
+              <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">Account Created!</h1>
+              <p className="text-muted-foreground mb-8 text-center">
+                Please check your email to verify your account before logging in.
+              </p>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required minLength={8} value={formData.password} onChange={handleChange} />
-            </div>
+              {/* Android PWA Install */}
+              {deferredPrompt && !isStandalone && (
+                <div className="bg-primary/5 border border-primary/20 p-5 rounded-xl mb-6">
+                  <h3 className="font-semibold text-primary mb-2">Install App for Best Experience</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Add this LMS to your home screen for faster access and fullscreen view.</p>
+                  <Button onClick={handleInstallClick} className="w-full h-11">Install App</Button>
+                </div>
+              )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" type="tel" required value={formData.phone} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="examYear">A/L Exam Year</Label>
-                <Input id="examYear" type="number" required value={formData.examYear} onChange={handleChange} />
-              </div>
-            </div>
+              {/* iOS PWA Install */}
+              {showIosPrompt && (
+                <div className="bg-primary/5 border border-primary/20 p-5 rounded-xl mb-6 text-left">
+                  <h3 className="font-semibold text-primary mb-2 text-center">Install on iOS</h3>
+                  <p className="text-sm text-muted-foreground mb-2">To install this app on your iPhone/iPad:</p>
+                  <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
+                    <li>Tap the <strong>Share</strong> icon in Safari's bottom bar.</li>
+                    <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+                  </ol>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="school">School</Label>
-              <Input id="school" required value={formData.school} onChange={handleChange} />
-            </div>
+              <Link to="/login">
+                <Button variant="outline" className="w-full h-11">Go to Login</Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Create an Account</h1>
+              <p className="text-muted-foreground mb-8">
+                Join the Accounting with Asela platform.
+              </p>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address (Optional)</Label>
-              <Input id="address" value={formData.address} onChange={handleChange} />
-            </div>
+              <form onSubmit={handleSignup} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" required value={formData.firstName} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" required value={formData.lastName} onChange={handleChange} className="h-11" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" type="email" required value={formData.email} onChange={handleChange} className="h-11" />
+                </div>
 
-            {error && <p className="text-sm text-destructive font-medium">{error}</p>}
-            
-            <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? 'Creating account...' : 'Sign Up'}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <div className="text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:underline font-medium">Log in</Link>
-          </div>
-        </CardFooter>
-      </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" required minLength={8} value={formData.password} onChange={handleChange} className="h-11" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input id="phone" type="tel" required value={formData.phone} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="examYear">A/L Exam Year</Label>
+                    <Input id="examYear" type="number" required value={formData.examYear} onChange={handleChange} className="h-11" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="school">School</Label>
+                  <Input id="school" required value={formData.school} onChange={handleChange} className="h-11" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address (Optional)</Label>
+                  <Input id="address" value={formData.address} onChange={handleChange} className="h-11" />
+                </div>
+
+                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+                
+                <Button className="w-full h-11 text-base mt-2" type="submit" disabled={loading}>
+                  {loading ? 'Creating account...' : 'Sign Up'}
+                </Button>
+              </form>
+
+              <p className="mt-8 text-center text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link to="/login" className="font-medium text-primary hover:underline">
+                  Log in
+                </Link>
+              </p>
+            </>
+          )}
+        </div>
+
+        <div className="text-center text-sm text-muted-foreground">
+          © 2026 Paradise of Accounting
+        </div>
+      </div>
+
+      {/* Right side - Background Image */}
+      <div className="hidden lg:block relative bg-muted h-full w-full">
+        <img 
+          src="/auth-bg.jpg" 
+          alt="Abstract 3D pattern" 
+          className="absolute inset-0 h-full w-full object-cover" 
+        />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
     </div>
   );
 }
