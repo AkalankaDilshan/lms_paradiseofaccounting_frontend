@@ -6,26 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Label } from '../../components/ui/label';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Question {
-  id: string;
-  text: string;
-  options: string[];
+  questionId: string;
+  questionText: string;
+  options: { index: number; text: string }[];
 }
 
 interface AttemptData {
   attemptId: string;
   quizId: string;
-  status: string;
+  durationMinutes: number;
   questions: Question[];
 }
 
 export function QuizAttempt() {
   const { id: quizId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  // answers: key=questionId, value=selectedOptionIndex
+  const [answers, setAnswers] = useState<Record<string, number>>({});
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   // 1. Fetch Attempt (Start Quiz)
@@ -38,11 +39,10 @@ export function QuizAttempt() {
     refetchOnWindowFocus: false,
   });
 
-  // For this mock, we assume 30 minutes duration.
-  // In a real app, the server would return the exact deadline or remaining time.
+  // Use durationMinutes from server response
   useEffect(() => {
     if (data && timeLeft === null) {
-      setTimeLeft(30 * 60); // 30 minutes in seconds
+      setTimeLeft(data.durationMinutes * 60);
     }
   }, [data]);
 
@@ -62,14 +62,11 @@ export function QuizAttempt() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // Submit Mutation
+  // Submit Mutation — answers are { [questionId]: selectedOptionIndex }
   const submitAttempt = useMutation({
     mutationFn: async () => {
       const payload = {
-        answers: Object.keys(answers).map(qId => ({
-          questionId: qId,
-          selectedOption: answers[qId]
-        }))
+        answersGiven: answers,
       };
       await apiClient.put(`/quizzes/${quizId}/attempts/${data?.attemptId}`, payload);
     },
@@ -84,7 +81,13 @@ export function QuizAttempt() {
     return `${m}:${s}`;
   };
 
-  if (isLoading) return <div className="p-8 text-center">Starting quiz...</div>;
+  if (isLoading) return (
+    <div className="space-y-4">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="h-36 rounded-xl bg-white/5 animate-pulse" />
+      ))}
+    </div>
+  );
   if (error || !data) return <div className="p-8 text-center text-destructive">Failed to start quiz. Max attempts reached or quiz closed.</div>;
 
   const isWarning = timeLeft !== null && timeLeft <= 300; // 5 mins
@@ -98,11 +101,16 @@ export function QuizAttempt() {
           <h1 className="text-xl font-bold line-clamp-1">Quiz in Progress</h1>
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-lg font-bold
             ${isDanger ? 'bg-destructive/10 text-destructive animate-pulse' : 
-              isWarning ? 'bg-accent/20 text-accent-foreground' : 'bg-primary/10 text-primary'}`}>
+              isWarning ? 'bg-amber-500/10 text-amber-400' : 'bg-primary/10 text-primary'}`}>
             <Clock className="w-5 h-5" />
             {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
           </div>
         </div>
+        {isWarning && !isDanger && (
+          <p className="text-amber-400 text-sm font-medium flex items-center mt-2">
+            <AlertTriangle className="w-4 h-4 mr-1" /> 5 minutes remaining — start wrapping up!
+          </p>
+        )}
         {isDanger && (
           <p className="text-destructive text-sm font-medium flex items-center mt-2">
             <AlertCircle className="w-4 h-4 mr-1" /> Less than a minute remaining!
@@ -115,30 +123,30 @@ export function QuizAttempt() {
         <AnimatePresence>
           {data.questions.map((q, index) => (
             <motion.div
-              key={q.id}
+              key={q.questionId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
             >
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg leading-relaxed font-sinhala">
                     <span className="text-muted-foreground mr-2">{index + 1}.</span>
-                    {q.text}
+                    {q.questionText}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup 
-                    value={answers[q.id] || ''} 
-                    onValueChange={(val: string) => setAnswers(prev => ({ ...prev, [q.id]: val }))}
+                  <RadioGroup
+                    value={answers[q.questionId] !== undefined ? String(answers[q.questionId]) : ''}
+                    onValueChange={(val: string) => setAnswers(prev => ({ ...prev, [q.questionId]: Number(val) }))}
                     className="space-y-3"
                   >
-                    {q.options.map((opt, i) => (
-                      <div key={i} className="flex items-start space-x-3 space-y-0 p-3 rounded-md border hover:bg-muted/50 transition-colors cursor-pointer"
-                           onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt }))}>
-                        <RadioGroupItem value={opt} id={`${q.id}-${i}`} className="mt-1" />
-                        <Label htmlFor={`${q.id}-${i}`} className="font-normal font-sinhala text-base cursor-pointer flex-1">
-                          {opt}
+                    {q.options.map((opt) => (
+                      <div key={opt.index} className="flex items-start space-x-3 space-y-0 p-3 rounded-md border hover:bg-muted/50 transition-colors cursor-pointer"
+                           onClick={() => setAnswers(prev => ({ ...prev, [q.questionId]: opt.index }))}>
+                        <RadioGroupItem value={String(opt.index)} id={`${q.questionId}-${opt.index}`} className="mt-1" />
+                        <Label htmlFor={`${q.questionId}-${opt.index}`} className="font-normal font-sinhala text-base cursor-pointer flex-1">
+                          {opt.text}
                         </Label>
                       </div>
                     ))}

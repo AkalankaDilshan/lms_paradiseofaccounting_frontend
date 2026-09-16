@@ -52,7 +52,13 @@ export function LoginPage() {
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: () => {
         refreshSession().then(() => {
-          navigate('/');
+          // Read role from refreshed session to navigate correctly
+          const currentUser = userPool?.getCurrentUser();
+          currentUser?.getSession((_err: any, session: any) => {
+            const groups: string[] = session?.getIdToken().decodePayload()['cognito:groups'] || [];
+            const isTeacher = groups.includes('SuperAdmin') || groups.includes('TA');
+            navigate(isTeacher ? '/teacher' : '/student');
+          });
         });
       },
       onFailure: (err) => {

@@ -17,13 +17,13 @@ export function StudentTrend() {
   const { user } = useAuth();
   
   const { data, isLoading, error } = useQuery({
-    queryKey: ['trend', user?.username],
+    queryKey: ['trend', user?.sub],
     queryFn: async () => {
-      // In a real app, use the user ID from Auth context. For mock, it's fine.
-      const res = await apiClient.get(`/analytics/students/${user?.username}/trend`);
+      // Backend expects Cognito sub (UUID), not username
+      const res = await apiClient.get(`/analytics/students/${user?.sub}/trend`);
       return res.data.items as TrendItem[];
     },
-    enabled: !!user?.username,
+    enabled: !!user?.sub,
   });
 
   if (isLoading) return <div className="p-8 text-center">Loading trend data...</div>;

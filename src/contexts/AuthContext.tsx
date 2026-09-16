@@ -13,6 +13,7 @@ export type UserRole = 'Student' | 'TA' | 'SuperAdmin' | null;
 export type DemoRole = 'Student' | 'TA';
 export interface User {
   username: string;
+  sub: string;       // Cognito UUID — use for API calls
   role: UserRole;
   email: string;
 }
@@ -22,9 +23,9 @@ const SIGNED_OUT_KEY = 'lms-demo-signed-out';
 
 function demoUser(role: DemoRole): User {
   if (role === 'Student') {
-    return { username: 'Akalanka Dilshan', email: 'akalanka@student.lk', role: 'Student' };
+    return { username: 'Akalanka Dilshan', sub: 'demo-student-sub', email: 'akalanka@student.lk', role: 'Student' };
   }
-  return { username: 'Asela', email: 'asela@paradiseofaccounting.lk', role: 'TA' };
+  return { username: 'Asela', sub: 'demo-teacher-sub', email: 'asela@paradiseofaccounting.lk', role: 'TA' };
 }
 
 function readStoredRole(): DemoRole {
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = session.getIdToken().getJwtToken();
         const payload = session.getIdToken().decodePayload();
         const role = (payload['cognito:groups']?.[0] as User['role']) || (import.meta.env.VITE_USE_MOCK ? 'Student' : null);
-        setUser({ username: cognitoUser.getUsername(), email: (payload.email as string) || '', role });
+        setUser({ username: cognitoUser.getUsername(), sub: payload.sub || '', email: (payload.email as string) || '', role });
         setIdToken(token);
         setIsLoading(false);
       });
