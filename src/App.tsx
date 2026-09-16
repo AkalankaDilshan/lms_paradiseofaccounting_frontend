@@ -6,16 +6,29 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import { StudentProfile } from './pages/student/StudentProfile';
 import { QuizAttempt } from './pages/student/QuizAttempt';
 import { QuizResults } from './pages/student/QuizResults';
 import { StudentTrend } from './pages/student/StudentTrend';
+import { AnnouncementsPage } from './pages/student/AnnouncementsPage';
+import { MessagesPage } from './pages/student/MessagesPage';
+import { MaterialsPage } from './pages/student/MaterialsPage';
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
+import { QuizList } from './pages/teacher/QuizList';
 import { QuestionBank } from './pages/teacher/QuestionBank';
 import { QuizBuilder } from './pages/teacher/QuizBuilder';
+import { QuestionForm } from './pages/teacher/QuestionForm';
 import { StudentManagement } from './pages/teacher/StudentManagement';
 import { QuizAnalytics } from './pages/teacher/QuizAnalytics';
 import { SettingsPage } from './pages/teacher/SettingsPage';
+import { PaymentsPage } from './pages/teacher/PaymentsPage';
+import { StudentPaymentHistory } from './pages/teacher/StudentPaymentHistory';
+import { AttendancePage } from './pages/teacher/AttendancePage';
+import { MaterialsPage as TeacherMaterialsPage } from './pages/teacher/MaterialsPage';
+import { AnnouncementsPage as TeacherAnnouncementsPage } from './pages/teacher/AnnouncementsPage';
+import { MessagesPage as TeacherMessagesPage } from './pages/teacher/MessagesPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider as JotaiProvider } from 'jotai';
 import type { ReactNode } from 'react';
 
 const queryClient = new QueryClient();
@@ -54,7 +67,10 @@ function AppRoutes() {
               <Routes>
                 <Route path="/" element={<StudentDashboard />} />
                 <Route path="/trend" element={<StudentTrend />} />
-                <Route path="/profile" element={<SettingsPage />} />
+                <Route path="/profile" element={<StudentProfile />} />
+                <Route path="/announcements" element={<AnnouncementsPage />} />
+                <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/materials" element={<MaterialsPage />} />
                 <Route path="/quizzes/:id/attempt" element={<QuizAttempt />} />
                 <Route path="/quizzes/:id/results/:attemptId" element={<QuizResults />} />
               </Routes>
@@ -67,13 +83,21 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={['TA', 'SuperAdmin']}>
               <Routes>
                 <Route path="/" element={<TeacherDashboard />} />
-                <Route path="/questions" element={<QuestionBank />} />
-                <Route path="/questions/new" element={<QuestionBank />} />
-                <Route path="/quizzes" element={<TeacherDashboard />} />
+                <Route path="/quizzes" element={<QuizList />} />
                 <Route path="/quizzes/new" element={<QuizBuilder />} />
+                <Route path="/quizzes/:id/edit" element={<QuizBuilder />} />
                 <Route path="/quizzes/:id/analytics" element={<QuizAnalytics />} />
+                <Route path="/questions" element={<QuestionBank />} />
+                <Route path="/questions/new" element={<QuestionForm />} />
+                <Route path="/questions/:id/edit" element={<QuestionForm />} />
                 <Route path="/analytics" element={<QuizAnalytics />} />
                 <Route path="/students" element={<StudentManagement />} />
+                <Route path="/payments" element={<PaymentsPage />} />
+                <Route path="/payments/:studentId" element={<StudentPaymentHistory />} />
+                <Route path="/attendance" element={<AttendancePage />} />
+                <Route path="/announcements" element={<TeacherAnnouncementsPage role="teacher" />} />
+                <Route path="/messages" element={<TeacherMessagesPage role="teacher" />} />
+                <Route path="/materials" element={<TeacherMaterialsPage role="teacher" />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </ProtectedRoute>
@@ -89,13 +113,15 @@ function AppRoutes() {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="lms-theme">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
-            <AppRoutes />
-          </Router>
-        </AuthProvider>
-      </QueryClientProvider>
+      <JotaiProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Router>
+              <AppRoutes />
+            </Router>
+          </AuthProvider>
+        </QueryClientProvider>
+      </JotaiProvider>
     </ThemeProvider>
   );
 }

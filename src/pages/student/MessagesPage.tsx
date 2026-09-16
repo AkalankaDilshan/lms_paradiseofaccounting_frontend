@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Mail, Send, X, Plus } from 'lucide-react';
+import { Mail, Send, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const GROUPS = [
@@ -29,7 +29,6 @@ interface MessagesPageProps {
 
 export function MessagesPage({ role }: MessagesPageProps) {
   const isTeacher = role === 'teacher';
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const [showModal, setShowModal] = useState(false);

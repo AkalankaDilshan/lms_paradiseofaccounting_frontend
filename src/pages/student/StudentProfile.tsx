@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Avatar } from '../../components/ui/avatar';
-import { User, Mail, Phone, School, CalendarDays, MapPin, Key, ShieldCheck, Clock } from 'lucide-react';
+import { User, Mail, Phone, School, CalendarDays, MapPin, Key, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CognitoUser } from 'amazon-cognito-identity-js';
 import { userPool } from '../../contexts/AuthContext';
@@ -48,10 +48,15 @@ export function StudentProfile() {
       return res.data as StudentProfile;
     },
     enabled: !!user?.sub,
-    onSuccess: (d: StudentProfile) => {
-      setFormData({ phone: d.phone, address: d.address });
-    },
   });
+
+  // Sync form data when profile loads (TanStack v5: no onSuccess callback)
+  useEffect(() => {
+    if (data) {
+      setFormData({ phone: data.phone || '', address: data.address || '' });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.phone, data?.address]);
 
   const updateProfile = useMutation({
     mutationFn: async () => {

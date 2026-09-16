@@ -5,7 +5,7 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { FileText, FileImage, File, Download, Upload, Search, Filter, X, Plus, Library } from 'lucide-react';
+import { FileText, FileImage, File, Download, Upload, Search, X, Library } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const GROUPS = [
