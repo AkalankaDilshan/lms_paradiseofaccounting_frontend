@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Avatar } from '../../components/ui/avatar';
+import { Badge } from '../../components/ui/badge';
+import { GroupBadge } from '../../components/GroupBadge';
 import { User, Mail, Phone, School, CalendarDays, MapPin, Key, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CognitoUser } from 'amazon-cognito-identity-js';
@@ -100,9 +102,7 @@ export function StudentProfile() {
   if (error || !data) return <div className="p-8 text-center text-destructive">Failed to load profile.</div>;
 
   const displayName = `${data.firstName} ${data.lastName}`;
-  const verificationColor = data.verificationStatus === 'auto_approved'
-    ? 'bg-success/15 text-success'
-    : 'bg-warning/15 text-warning';
+  const verificationVariant = data.verificationStatus === 'auto_approved' ? 'success' : 'warning';
 
   return (
     <motion.div
@@ -125,17 +125,13 @@ export function StudentProfile() {
             <h2 className="text-2xl font-bold">{displayName}</h2>
             <p className="text-muted-foreground">{data.email}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${verificationColor}`}>
+              <Badge variant={verificationVariant} className="px-2 py-1">
                 <ShieldCheck className="inline w-3 h-3 mr-1" />
                 {data.verificationStatus === 'auto_approved' ? 'Verified' : 'Pending Review'}
-              </span>
-              <span className="text-xs px-2 py-1 rounded-full font-medium bg-primary/15 text-primary">
-                {data.role}
-              </span>
+              </Badge>
+              <Badge variant="primary" className="px-2 py-1">{data.role}</Badge>
               {data.groups.map(g => (
-                <span key={g} className="text-xs px-2 py-1 rounded-full font-medium bg-white/10 text-foreground">
-                  {g}
-                </span>
+                <GroupBadge key={g} group={g} className="px-2 py-1" />
               ))}
             </div>
           </div>

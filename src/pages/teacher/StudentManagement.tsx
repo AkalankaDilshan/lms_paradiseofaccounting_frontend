@@ -9,6 +9,8 @@ import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Upload, UserPlus, Search, Trash2, Users, X, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Badge } from '../../components/ui/badge';
+import { GroupBadge } from '../../components/GroupBadge';
 
 const GROUPS = [
   'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
@@ -199,17 +201,14 @@ export function StudentManagement() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {student.groups.map(g => (
-                          <span key={g} className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs">
-                            {g}
-                          </span>
+                          <GroupBadge key={g} group={g} />
                         ))}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium
-                        ${student.status === 'active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>
+                      <Badge variant={student.status === 'active' ? 'success' : 'destructive'}>
                         {student.status}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -309,7 +308,7 @@ export function StudentManagement() {
                 const inGroup = showGroupPanel.groups.includes(g);
                 return (
                   <div key={g} className="flex items-center justify-between p-3 rounded-lg border border-white/10">
-                    <span className="text-sm">{g}</span>
+                    <GroupBadge group={g} />
                     {inGroup ? (
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
                         onClick={() => removeGroupMutation.mutate({ userId: showGroupPanel.userId, group: g })}>

@@ -7,6 +7,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { FileText, FileImage, File, Download, Upload, Search, X, Library } from 'lucide-react';
 import { motion } from 'motion/react';
+import { GroupBadge } from '../../components/GroupBadge';
+import { groupToggleClasses } from '../../lib/groupColors';
 
 const GROUPS = [
   'ALL', 'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
@@ -216,7 +218,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {m.targetGroups.map(g => (
-                        <span key={g} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{g}</span>
+                        <GroupBadge key={g} group={g} className="text-[10px] px-1.5 py-0.5" />
                       ))}
                     </div>
                   </CardContent>
@@ -254,9 +256,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                   <div className="flex flex-wrap gap-2">
                     {GROUPS.map(g => (
                       <button key={g} type="button" onClick={() => toggleGroup(g)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          formGroups.includes(g) ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-muted-foreground hover:bg-white/20'
-                        }`}>{g}</button>
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${groupToggleClasses(g, formGroups.includes(g))}`}>{g}</button>
                     ))}
                   </div>
                 </div>

@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Plus, Edit2, BarChart3, Archive, ClipboardList, Search, Filter } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Badge } from '../../components/ui/badge';
+import { GroupBadge } from '../../components/GroupBadge';
 
 interface Quiz {
   quizId: string;
@@ -19,14 +21,14 @@ interface Quiz {
   archived: boolean;
 }
 
-function quizStatus(quiz: Quiz): { label: string; color: string } {
+function quizStatus(quiz: Quiz): { label: string; variant: 'default' | 'primary' | 'destructive' | 'success' } {
   const now = new Date();
   const open = new Date(quiz.openAt);
   const close = new Date(quiz.closeAt);
-  if (quiz.archived) return { label: 'Archived', color: 'bg-white/10 text-muted-foreground' };
-  if (now < open) return { label: 'Scheduled', color: 'bg-primary/15 text-primary' };
-  if (now > close) return { label: 'Closed', color: 'bg-destructive/15 text-destructive' };
-  return { label: 'Open', color: 'bg-success/15 text-success' };
+  if (quiz.archived) return { label: 'Archived', variant: 'default' };
+  if (now < open) return { label: 'Scheduled', variant: 'primary' };
+  if (now > close) return { label: 'Closed', variant: 'destructive' };
+  return { label: 'Open', variant: 'success' };
 }
 
 export function QuizList() {
@@ -123,9 +125,7 @@ export function QuizList() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <p className="font-medium truncate">{quiz.title}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.color}`}>
-                          {status.label}
-                        </span>
+                        <Badge variant={status.variant}>{status.label}</Badge>
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>Opens: {new Date(quiz.openAt).toLocaleString()}</span>
@@ -135,9 +135,7 @@ export function QuizList() {
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {quiz.allowedGroups.map(g => (
-                          <span key={g} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground">
-                            {g}
-                          </span>
+                          <GroupBadge key={g} group={g} className="text-[10px] px-1.5 py-0.5" />
                         ))}
                       </div>
                     </div>

@@ -6,6 +6,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Mail, Send, X } from 'lucide-react';
+import { GroupBadge } from '../../components/GroupBadge';
+import { groupToggleClasses } from '../../lib/groupColors';
 import { motion } from 'motion/react';
 
 const GROUPS = [
@@ -137,7 +139,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
                   <h2 className="text-xl font-bold">{selected.subject}</h2>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selected.targetGroups.map(g => (
-                      <span key={g} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{g}</span>
+                      <GroupBadge key={g} group={g} />
                     ))}
                     <span className="text-xs text-muted-foreground">
                       {new Date(selected.sentAt).toLocaleString('en-US', {
@@ -182,9 +184,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
                   <div className="flex flex-wrap gap-2">
                     {GROUPS.map(g => (
                       <button key={g} type="button" onClick={() => toggleGroup(g)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          formGroups.includes(g) ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-muted-foreground hover:bg-white/20'
-                        }`}>{g}</button>
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${groupToggleClasses(g, formGroups.includes(g))}`}>{g}</button>
                     ))}
                   </div>
                 </div>

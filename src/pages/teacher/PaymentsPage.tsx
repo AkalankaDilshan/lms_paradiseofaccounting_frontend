@@ -8,6 +8,8 @@ import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Search, Download, DollarSign, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Badge } from '../../components/ui/badge';
+import { GroupBadge } from '../../components/GroupBadge';
 
 interface PaymentRecord {
   userId: string;
@@ -19,10 +21,10 @@ interface PaymentRecord {
 }
 
 const STATUS_CONFIG = {
-  paid: { label: 'Paid', color: 'bg-success/15 text-success', icon: CheckCircle2 },
-  pending: { label: 'Pending', color: 'bg-warning/15 text-warning', icon: Clock },
-  overdue: { label: 'Overdue', color: 'bg-destructive/15 text-destructive', icon: AlertCircle },
-  waived: { label: 'Waived', color: 'bg-white/10 text-muted-foreground', icon: CheckCircle2 },
+  paid: { label: 'Paid', variant: 'success' as const, icon: CheckCircle2 },
+  pending: { label: 'Pending', variant: 'warning' as const, icon: Clock },
+  overdue: { label: 'Overdue', variant: 'destructive' as const, icon: AlertCircle },
+  waived: { label: 'Waived', variant: 'default' as const, icon: CheckCircle2 },
 };
 
 const MONTH_DOT_COLOR: Record<string, string> = {
@@ -191,11 +193,9 @@ export function PaymentsPage() {
                     <TableCell>
                       <p className="font-medium text-sm">{s.firstName} {s.lastName}</p>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{s.group}</TableCell>
+                    <TableCell><GroupBadge group={s.group} /></TableCell>
                     <TableCell>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${st.color}`}>
-                        {st.label}
-                      </span>
+                      <Badge variant={st.variant} className="px-2 py-1">{st.label}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">

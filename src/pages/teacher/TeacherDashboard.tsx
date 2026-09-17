@@ -18,16 +18,18 @@ import {
   recentAttempts,
 } from '../../data/admin-dashboard';
 import { cn } from '../../lib/utils';
+import { Badge } from '../../components/ui/badge';
+import { GroupBadge } from '../../components/GroupBadge';
 import { apiClient } from '../../api/client';
 
 const PAGE_SIZE = 5;
 const upColor = 'hsl(var(--success))';
 const downColor = 'hsl(var(--destructive))';
 
-const statusClasses = {
-  Completed: 'bg-success/12 text-success',
-  'In progress': 'bg-warning/12 text-warning',
-  Missed: 'bg-destructive/12 text-destructive',
+const statusVariants = {
+  Completed: 'success',
+  'In progress': 'warning',
+  Missed: 'destructive',
 } as const;
 
 const tooltipStyle = {
@@ -281,12 +283,10 @@ export function TeacherDashboard() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden max-w-[220px] truncate md:table-cell">{attempt.quiz}</TableCell>
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">{attempt.group}</TableCell>
+                    <TableCell className="hidden lg:table-cell"><GroupBadge group={attempt.group} /></TableCell>
                     <TableCell className="font-medium tabular-nums">{attempt.score}</TableCell>
                     <TableCell>
-                      <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', statusClasses[attempt.status])}>
-                        {attempt.status}
-                      </span>
+                      <Badge variant={statusVariants[attempt.status]}>{attempt.status}</Badge>
                     </TableCell>
                     <TableCell className="hidden text-muted-foreground sm:table-cell pr-4">{attempt.date}</TableCell>
                   </TableRow>

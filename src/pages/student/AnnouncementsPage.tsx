@@ -7,6 +7,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Megaphone, Pin, X, Plus, Edit2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { GroupBadge } from '../../components/GroupBadge';
+import { groupToggleClasses } from '../../lib/groupColors';
 
 const GROUPS = [
   'ALL', 'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
@@ -176,9 +178,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
                         {new Date(ann.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                       {ann.targetGroups.map(g => (
-                        <span key={g} className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-muted-foreground">
-                          {g}
-                        </span>
+                        <GroupBadge key={g} group={g} />
                       ))}
                     </div>
                   </div>
@@ -232,9 +232,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
                     {GROUPS.map(g => (
                       <button key={g} type="button"
                         onClick={() => toggleGroup(g)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          formGroups.includes(g) ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-muted-foreground hover:bg-white/20'
-                        }`}>
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${groupToggleClasses(g, formGroups.includes(g))}`}>
                         {g}
                       </button>
                     ))}

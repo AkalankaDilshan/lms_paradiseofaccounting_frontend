@@ -8,12 +8,13 @@ import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { ArrowLeft, Printer, CheckCircle2, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Badge } from '../../components/ui/badge';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  paid: { label: 'Paid', color: 'bg-success/15 text-success' },
-  pending: { label: 'Pending', color: 'bg-warning/15 text-warning' },
-  overdue: { label: 'Overdue', color: 'bg-destructive/15 text-destructive' },
-  waived: { label: 'Waived', color: 'bg-white/10 text-muted-foreground' },
+const STATUS_CONFIG: Record<string, { label: string; variant: 'success' | 'warning' | 'destructive' | 'default' }> = {
+  paid: { label: 'Paid', variant: 'success' },
+  pending: { label: 'Pending', variant: 'warning' },
+  overdue: { label: 'Overdue', variant: 'destructive' },
+  waived: { label: 'Waived', variant: 'default' },
 };
 
 export function StudentPaymentHistory() {
@@ -100,9 +101,7 @@ export function StudentPaymentHistory() {
                     <TableCell className="font-medium">{h.month}</TableCell>
                     <TableCell>LKR {(h.amount || 2500).toLocaleString()}</TableCell>
                     <TableCell>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>
-                        {st.label}
-                      </span>
+                      <Badge variant={st.variant}>{st.label}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {h.paidAt ? new Date(h.paidAt).toLocaleDateString() : '—'}
