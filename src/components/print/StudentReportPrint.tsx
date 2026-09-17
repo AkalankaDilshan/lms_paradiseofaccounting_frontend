@@ -48,11 +48,11 @@ export function StudentReportPrint({ student, stats, quizResults }: StudentRepor
           <div className="flex space-x-12">
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wider mb-1">Average Score</p>
-              <p className="text-2xl font-bold text-green-700">{stats.averageScore.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-success">{stats.averageScore.toFixed(1)}%</p>
             </div>
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wider mb-1">Class Rank</p>
-              <p className="text-2xl font-bold text-blue-700">#{stats.classRank} <span className="text-lg text-gray-500 font-medium">/ {stats.totalStudents}</span></p>
+              <p className="text-2xl font-bold text-info">#{stats.classRank} <span className="text-lg text-gray-500 font-medium">/ {stats.totalStudents}</span></p>
             </div>
           </div>
         </div>

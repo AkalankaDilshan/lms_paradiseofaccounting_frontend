@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 
-const fallbackColors = ['bg-primary', 'bg-accent', 'bg-emerald-600'];
+// Uses the theme's brand + chart tokens (not hardcoded Tailwind palette colors)
+// so avatar colors stay on-brand and adapt automatically in dark mode.
+const fallbackColors = [
+  'bg-primary', 'bg-accent',
+  'bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5',
+];
 
 type AvatarSize = 'sm' | 'md' | 'lg';
 

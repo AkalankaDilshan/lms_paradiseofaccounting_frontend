@@ -164,7 +164,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
                         <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                       )}
                       {ann.isPinned && (
-                        <span className="flex items-center gap-1 text-xs font-medium text-amber-400">
+                        <span className="flex items-center gap-1 text-xs font-medium text-accent">
                           <Pin className="w-3 h-3" /> Pinned
                         </span>
                       )}
@@ -188,7 +188,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
                         <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteAnn.mutate(ann.announcementId)}>
-                        <X className="w-3.5 h-3.5 text-rose-400" />
+                        <X className="w-3.5 h-3.5 text-destructive" />
                       </Button>
                     </div>
                   )}

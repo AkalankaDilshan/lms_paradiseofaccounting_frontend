@@ -21,13 +21,13 @@ import { cn } from '../../lib/utils';
 import { apiClient } from '../../api/client';
 
 const PAGE_SIZE = 5;
-const upColor = 'hsl(142 70% 45%)';
-const downColor = 'hsl(346 77% 55%)';
+const upColor = 'hsl(var(--success))';
+const downColor = 'hsl(var(--destructive))';
 
 const statusClasses = {
-  Completed: 'bg-emerald-500/12 text-emerald-400',
-  'In progress': 'bg-amber-500/12 text-amber-400',
-  Missed: 'bg-rose-500/12 text-rose-400',
+  Completed: 'bg-success/12 text-success',
+  'In progress': 'bg-warning/12 text-warning',
+  Missed: 'bg-destructive/12 text-destructive',
 } as const;
 
 const tooltipStyle = {
@@ -46,7 +46,7 @@ function formatDelta(delta: number) {
 function Trend({ delta, good }: { delta: number; good: boolean }) {
   const Icon = delta >= 0 ? TrendingUp : TrendingDown;
   return (
-    <span className={cn('inline-flex items-center gap-1 text-xs font-medium', good ? 'text-emerald-400' : 'text-rose-400')}>
+    <span className={cn('inline-flex items-center gap-1 text-xs font-medium', good ? 'text-success' : 'text-destructive')}>
       <Icon className="size-3.5" />
       {formatDelta(delta)}
     </span>
@@ -109,7 +109,7 @@ export function TeacherDashboard() {
   const totalStudents = 75;
   const paidCount = 48;
   const collectionRate = (paidCount / totalStudents) * 100;
-  const paymentColor = collectionRate < 50 ? 'text-rose-500' : collectionRate < 80 ? 'text-amber-500' : 'text-emerald-500';
+  const paymentColor = collectionRate < 50 ? 'text-destructive' : collectionRate < 80 ? 'text-warning' : 'text-success';
 
   return (
     <div className="space-y-5">
@@ -142,7 +142,7 @@ export function TeacherDashboard() {
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div className={cn("h-full rounded-full transition-all", 
-                  collectionRate < 50 ? 'bg-rose-500' : collectionRate < 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                  collectionRate < 50 ? 'bg-destructive' : collectionRate < 80 ? 'bg-warning' : 'bg-success'
                 )} style={{ width: `${collectionRate}%` }} />
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-border">

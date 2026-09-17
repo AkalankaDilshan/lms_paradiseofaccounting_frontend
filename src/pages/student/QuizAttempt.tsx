@@ -101,13 +101,13 @@ export function QuizAttempt() {
           <h1 className="text-xl font-bold line-clamp-1">Quiz in Progress</h1>
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-lg font-bold
             ${isDanger ? 'bg-destructive/10 text-destructive animate-pulse' : 
-              isWarning ? 'bg-amber-500/10 text-amber-400' : 'bg-primary/10 text-primary'}`}>
+              isWarning ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
             <Clock className="w-5 h-5" />
             {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
           </div>
         </div>
         {isWarning && !isDanger && (
-          <p className="text-amber-400 text-sm font-medium flex items-center mt-2">
+          <p className="text-warning text-sm font-medium flex items-center mt-2">
             <AlertTriangle className="w-4 h-4 mr-1" /> 5 minutes remaining — start wrapping up!
           </p>
         )}

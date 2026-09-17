@@ -10,9 +10,9 @@ import { ArrowLeft, Printer, CheckCircle2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  paid: { label: 'Paid', color: 'bg-emerald-500/15 text-emerald-400' },
-  pending: { label: 'Pending', color: 'bg-amber-500/15 text-amber-400' },
-  overdue: { label: 'Overdue', color: 'bg-rose-500/15 text-rose-400' },
+  paid: { label: 'Paid', color: 'bg-success/15 text-success' },
+  pending: { label: 'Pending', color: 'bg-warning/15 text-warning' },
+  overdue: { label: 'Overdue', color: 'bg-destructive/15 text-destructive' },
   waived: { label: 'Waived', color: 'bg-white/10 text-muted-foreground' },
 };
 
@@ -115,7 +115,7 @@ export function StudentPaymentHistory() {
                         {h.status !== 'paid' && (
                           <Button variant="ghost" size="sm"
                             onClick={() => updatePayment.mutate({ month: h.month, status: 'paid' })}>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-1" /> Mark Paid
+                            <CheckCircle2 className="w-3.5 h-3.5 text-success mr-1" /> Mark Paid
                           </Button>
                         )}
                         <Button variant="ghost" size="sm"

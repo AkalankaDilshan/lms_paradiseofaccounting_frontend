@@ -274,7 +274,7 @@ export function QuizBuilder() {
           <Card>
             <CardContent className="space-y-4 p-5">
               <div className="flex gap-3">
-                <CalendarClock className="h-5 w-5 text-amber-400 shrink-0" />
+                <CalendarClock className="h-5 w-5 text-info shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Scheduling tip</p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

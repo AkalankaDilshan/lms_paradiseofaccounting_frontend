@@ -111,11 +111,11 @@ export function LoginPage() {
       <div className="relative flex flex-col p-8 lg:p-12 xl:p-16 overflow-hidden">
         {/* Floating Blobs */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[10%] left-[10%] w-56 h-56 bg-purple-500/15 rounded-full mix-blend-screen filter blur-3xl animate-float"></div>
-          <div className="absolute top-[30%] right-[10%] w-64 h-64 bg-amber-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '1.5s' }}></div>
-          <div className="absolute bottom-[20%] left-[15%] w-56 h-56 bg-green-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
-          <div className="absolute bottom-[10%] right-[20%] w-48 h-48 bg-fuchsia-500/15 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4.5s' }}></div>
-          <div className="absolute top-[60%] left-[40%] w-56 h-56 bg-emerald-500/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2.5s' }}></div>
+          <div className="absolute top-[10%] left-[10%] w-56 h-56 bg-primary/15 rounded-full mix-blend-screen filter blur-3xl animate-float"></div>
+          <div className="absolute top-[30%] right-[10%] w-64 h-64 bg-accent/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '1.5s' }}></div>
+          <div className="absolute bottom-[20%] left-[15%] w-56 h-56 bg-chart-1/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '3s' }}></div>
+          <div className="absolute bottom-[10%] right-[20%] w-48 h-48 bg-chart-4/15 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4.5s' }}></div>
+          <div className="absolute top-[60%] left-[40%] w-56 h-56 bg-chart-2/10 rounded-full mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2.5s' }}></div>
         </div>
 
         <div className="relative z-10 mb-12 flex items-center gap-3">

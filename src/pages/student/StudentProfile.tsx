@@ -101,8 +101,8 @@ export function StudentProfile() {
 
   const displayName = `${data.firstName} ${data.lastName}`;
   const verificationColor = data.verificationStatus === 'auto_approved'
-    ? 'bg-emerald-500/15 text-emerald-400'
-    : 'bg-amber-500/15 text-amber-400';
+    ? 'bg-success/15 text-success'
+    : 'bg-warning/15 text-warning';
 
   return (
     <motion.div
@@ -221,7 +221,7 @@ export function StudentProfile() {
             <Input id="pwConfirm" type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} className="h-10" />
           </div>
           {pwError && <p className="text-sm text-destructive">{pwError}</p>}
-          {pwSuccess && <p className="text-sm text-emerald-400">{pwSuccess}</p>}
+          {pwSuccess && <p className="text-sm text-success">{pwSuccess}</p>}
           <Button onClick={handleChangePassword} disabled={pwLoading}>
             {pwLoading ? 'Changing...' : 'Change Password'}
           </Button>

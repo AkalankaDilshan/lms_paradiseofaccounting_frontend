@@ -71,10 +71,10 @@ export function StudentDashboard() {
     {pinnedAnnouncements.length > 0 && (
       <section className="grid gap-4 sm:grid-cols-2">
         {pinnedAnnouncements.map(ann => (
-          <Card key={ann.announcementId} className="border-l-4 border-l-amber-400 bg-amber-400/5">
+          <Card key={ann.announcementId} className="border-l-4 border-l-accent bg-accent/5">
             <CardContent className="p-4">
               <div className="flex gap-2 items-start">
-                <Pin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <Pin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-sm">{ann.title}</h3>
                   <p className="text-xs text-foreground/80 mt-1 line-clamp-2 font-sinhala">{ann.body}</p>
@@ -88,8 +88,8 @@ export function StudentDashboard() {
 
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <StatCard icon={Target} label="My average score" value="83.6%" trend="+4.2%" tone="text-primary" />
-      <StatCard icon={CheckCircle2} label="Quizzes completed" value="18" trend="of 24 assigned" tone="text-emerald-400" />
-      <StatCard icon={BookOpen} label="Class position" value="#07" trend="top 10% of class" tone="text-amber-400" />
+      <StatCard icon={CheckCircle2} label="Quizzes completed" value="18" trend="of 24 assigned" tone="text-success" />
+      <StatCard icon={BookOpen} label="Class position" value="#07" trend="top 10% of class" tone="text-accent" />
     </section>
 
     <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -185,7 +185,7 @@ export function StudentDashboard() {
                   <Avatar id={attempt.id} name={attempt.title} size="sm" className="rounded-lg" />
                   <div className="min-w-0"><p className="truncate text-sm font-medium">{attempt.title}</p><p className="text-xs text-muted-foreground">{attempt.date}</p></div>
                 </div>
-                <div className="text-right"><p className="font-bold text-emerald-400">{attempt.score}%</p><p className="text-xs text-muted-foreground">{attempt.status}</p></div>
+                <div className="text-right"><p className="font-bold text-success">{attempt.score}%</p><p className="text-xs text-muted-foreground">{attempt.status}</p></div>
               </div>
             ))}
           </div>

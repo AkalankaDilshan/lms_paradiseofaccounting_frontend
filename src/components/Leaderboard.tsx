@@ -36,7 +36,7 @@ export function Leaderboard({ quizId }: { quizId: string }) {
             {data.map((entry) => {
               const studentId = entry.studentId || `leaderboard-${entry.firstName.toLowerCase().replace(/\s+/g, '-')}`;
               return (
-                <TableRow key={entry.rank} className={entry.rank === 1 ? 'bg-amber-500/10 dark:bg-amber-500/5' : entry.rank === 2 ? 'bg-slate-300/20 dark:bg-slate-300/5' : entry.rank === 3 ? 'bg-orange-700/10 dark:bg-orange-700/5' : ''}>
+                <TableRow key={entry.rank} className={entry.rank === 1 ? 'bg-accent/10 dark:bg-accent/5' : entry.rank === 2 ? 'bg-slate-300/20 dark:bg-slate-300/5' : entry.rank === 3 ? 'bg-orange-700/10 dark:bg-orange-700/5' : ''}>
                   <TableCell className="text-center font-medium">{entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}</TableCell>
                   <TableCell className={entry.rank <= 3 ? 'font-semibold' : ''}><div className="flex items-center gap-3"><Avatar id={studentId} name={entry.firstName} size="sm" /><span>{entry.firstName}</span></div></TableCell>
                   <TableCell className="pr-6 text-right font-bold">{entry.score}</TableCell>

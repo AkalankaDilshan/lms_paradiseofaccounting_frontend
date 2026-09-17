@@ -148,7 +148,7 @@ export function StudentManagement() {
             <p className="font-medium text-sm">CSV Import Complete</p>
             <p className="text-sm text-muted-foreground mt-1">
               Imported {csvResult.imported}/{csvResult.total} students.
-              {csvResult.failed > 0 && <span className="text-amber-400 ml-1">{csvResult.failed} failed.</span>}
+              {csvResult.failed > 0 && <span className="text-warning ml-1">{csvResult.failed} failed.</span>}
             </p>
           </div>
           <button onClick={() => setCsvResult(null)} className="text-muted-foreground hover:text-foreground">
@@ -207,7 +207,7 @@ export function StudentManagement() {
                     </TableCell>
                     <TableCell>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium
-                        ${student.status === 'active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`}>
+                        ${student.status === 'active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>
                         {student.status}
                       </span>
                     </TableCell>
@@ -221,7 +221,7 @@ export function StudentManagement() {
                           onClick={() => suspendStudent.mutate(student.userId)}
                           disabled={suspendStudent.isPending}
                           title="Suspend student">
-                          <Trash2 className="w-4 h-4 text-rose-400" />
+                          <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
@@ -311,12 +311,12 @@ export function StudentManagement() {
                   <div key={g} className="flex items-center justify-between p-3 rounded-lg border border-white/10">
                     <span className="text-sm">{g}</span>
                     {inGroup ? (
-                      <Button variant="ghost" size="sm" className="text-rose-400 hover:text-rose-400"
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
                         onClick={() => removeGroupMutation.mutate({ userId: showGroupPanel.userId, group: g })}>
                         <X className="w-3.5 h-3.5" />
                       </Button>
                     ) : (
-                      <Button variant="ghost" size="sm" className="text-emerald-400 hover:text-emerald-400"
+                      <Button variant="ghost" size="sm" className="text-success hover:text-success"
                         onClick={() => addGroupMutation.mutate({ userId: showGroupPanel.userId, group: g })}>
                         <Plus className="w-3.5 h-3.5" />
                       </Button>

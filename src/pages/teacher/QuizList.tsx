@@ -25,8 +25,8 @@ function quizStatus(quiz: Quiz): { label: string; color: string } {
   const close = new Date(quiz.closeAt);
   if (quiz.archived) return { label: 'Archived', color: 'bg-white/10 text-muted-foreground' };
   if (now < open) return { label: 'Scheduled', color: 'bg-primary/15 text-primary' };
-  if (now > close) return { label: 'Closed', color: 'bg-rose-500/15 text-rose-400' };
-  return { label: 'Open', color: 'bg-emerald-500/15 text-emerald-400' };
+  if (now > close) return { label: 'Closed', color: 'bg-destructive/15 text-destructive' };
+  return { label: 'Open', color: 'bg-success/15 text-success' };
 }
 
 export function QuizList() {

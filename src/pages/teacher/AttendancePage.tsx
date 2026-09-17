@@ -90,11 +90,11 @@ export function AttendancePage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-400">{presentCount}</p>
+          <p className="text-2xl font-bold text-success">{presentCount}</p>
           <p className="text-xs text-muted-foreground mt-1">Present</p>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-rose-400">{absentCount}</p>
+          <p className="text-2xl font-bold text-destructive">{absentCount}</p>
           <p className="text-xs text-muted-foreground mt-1">Absent</p>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-center">
@@ -111,10 +111,10 @@ export function AttendancePage() {
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => markAll('present')}>
-              <UserCheck className="w-3.5 h-3.5 mr-1 text-emerald-400" /> All Present
+              <UserCheck className="w-3.5 h-3.5 mr-1 text-success" /> All Present
             </Button>
             <Button variant="outline" size="sm" onClick={() => markAll('absent')}>
-              <UserX className="w-3.5 h-3.5 mr-1 text-rose-400" /> All Absent
+              <UserX className="w-3.5 h-3.5 mr-1 text-destructive" /> All Absent
             </Button>
           </div>
         </CardHeader>
@@ -139,7 +139,7 @@ export function AttendancePage() {
                       <Button
                         size="sm"
                         variant={status === 'present' ? 'default' : 'outline'}
-                        className={`h-8 ${status === 'present' ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-0' : ''}`}
+                        className={`h-8 ${status === 'present' ? 'bg-success hover:bg-success/90 text-white border-0' : ''}`}
                         onClick={() => setAttendance(prev => ({ ...prev, [s.userId]: 'present' }))}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
@@ -147,7 +147,7 @@ export function AttendancePage() {
                       <Button
                         size="sm"
                         variant={status === 'absent' ? 'default' : 'outline'}
-                        className={`h-8 ${status === 'absent' ? 'bg-rose-500 hover:bg-rose-600 text-white border-0' : ''}`}
+                        className={`h-8 ${status === 'absent' ? 'bg-destructive hover:bg-destructive/90 text-white border-0' : ''}`}
                         onClick={() => setAttendance(prev => ({ ...prev, [s.userId]: 'absent' }))}
                       >
                         <UserX className="w-3.5 h-3.5" />
@@ -169,7 +169,7 @@ export function AttendancePage() {
           {saveAttendance.isPending ? 'Saving...' : 'Save Attendance'}
         </Button>
         {saved && (
-          <p className="text-sm text-emerald-400 flex items-center gap-1">
+          <p className="text-sm text-success flex items-center gap-1">
             <UserCheck className="w-4 h-4" /> Saved successfully!
           </p>
         )}

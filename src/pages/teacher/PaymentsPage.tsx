@@ -19,16 +19,16 @@ interface PaymentRecord {
 }
 
 const STATUS_CONFIG = {
-  paid: { label: 'Paid', color: 'bg-emerald-500/15 text-emerald-400', icon: CheckCircle2 },
-  pending: { label: 'Pending', color: 'bg-amber-500/15 text-amber-400', icon: Clock },
-  overdue: { label: 'Overdue', color: 'bg-rose-500/15 text-rose-400', icon: AlertCircle },
+  paid: { label: 'Paid', color: 'bg-success/15 text-success', icon: CheckCircle2 },
+  pending: { label: 'Pending', color: 'bg-warning/15 text-warning', icon: Clock },
+  overdue: { label: 'Overdue', color: 'bg-destructive/15 text-destructive', icon: AlertCircle },
   waived: { label: 'Waived', color: 'bg-white/10 text-muted-foreground', icon: CheckCircle2 },
 };
 
 const MONTH_DOT_COLOR: Record<string, string> = {
-  paid: 'bg-emerald-500',
-  pending: 'bg-amber-500',
-  overdue: 'bg-rose-500',
+  paid: 'bg-success',
+  pending: 'bg-warning',
+  overdue: 'bg-destructive',
   waived: 'bg-white/30',
 };
 
@@ -114,11 +114,11 @@ export function PaymentsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Paid', value: stats.paid, color: 'text-emerald-400', icon: CheckCircle2 },
-          { label: 'Pending', value: stats.pending, color: 'text-amber-400', icon: Clock },
-          { label: 'Overdue', value: stats.overdue, color: 'text-rose-400', icon: AlertCircle },
+          { label: 'Paid', value: stats.paid, color: 'text-success', icon: CheckCircle2 },
+          { label: 'Pending', value: stats.pending, color: 'text-warning', icon: Clock },
+          { label: 'Overdue', value: stats.overdue, color: 'text-destructive', icon: AlertCircle },
           { label: 'Collection Rate', value: `${stats.total ? Math.round((stats.paid / stats.total) * 100) : 0}%`,
-            color: stats.paid / stats.total >= 0.8 ? 'text-emerald-400' : stats.paid / stats.total >= 0.5 ? 'text-amber-400' : 'text-rose-400',
+            color: stats.paid / stats.total >= 0.8 ? 'text-success' : stats.paid / stats.total >= 0.5 ? 'text-warning' : 'text-destructive',
             icon: DollarSign },
         ].map(s => (
           <Card key={s.label}>

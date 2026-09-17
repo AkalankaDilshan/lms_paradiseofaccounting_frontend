@@ -166,7 +166,7 @@ export function QuestionForm() {
                   placeholder={`Option ${idx + 1}...`}
                   value={opt.text}
                   onChange={e => setOptions(prev => prev.map((o, i) => i === idx ? { ...o, text: e.target.value } : o))}
-                  className={`h-10 flex-1 font-sinhala ${correctIndex === idx ? 'border-emerald-500/50' : ''}`}
+                  className={`h-10 flex-1 font-sinhala ${correctIndex === idx ? 'border-success/50' : ''}`}
                 />
                 <button onClick={() => removeOption(idx)} className="text-muted-foreground hover:text-destructive" title="Remove option">
                   <X className="w-4 h-4" />
@@ -211,7 +211,7 @@ export function QuestionForm() {
                   onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
               </label>
               {imageKey && (
-                <div className="flex items-center gap-2 text-sm text-emerald-400">
+                <div className="flex items-center gap-2 text-sm text-success">
                   <span className="truncate max-w-xs">Image uploaded ✓</span>
                   <button onClick={() => setImageKey('')} className="hover:text-destructive">
                     <X className="w-3.5 h-3.5" />

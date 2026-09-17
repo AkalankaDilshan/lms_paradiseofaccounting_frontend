@@ -250,7 +250,7 @@ export function AppLayout() {
         <Button
           variant="ghost"
           className={cn(
-            'h-8 w-full text-muted-foreground hover:bg-rose-500/10 hover:text-rose-400',
+            'h-8 w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive',
             collapsed ? 'justify-center px-0' : 'justify-start',
           )}
           onClick={() => {
@@ -316,7 +316,7 @@ export function AppLayout() {
             <Popover>
               <PopoverTrigger className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'relative')}>
                 <Bell className="size-4" />
-                <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-rose-500" />
+                <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-destructive" />
                 <span className="sr-only">Notifications</span>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-80 p-0">
@@ -363,7 +363,7 @@ export function AppLayout() {
                 )}
                 <Button
                   variant="ghost"
-                  className="h-8 w-full justify-start text-rose-400 hover:text-rose-400"
+                  className="h-8 w-full justify-start text-destructive hover:text-destructive"
                   onClick={() => {
                     signOut();
                     navigate('/login');

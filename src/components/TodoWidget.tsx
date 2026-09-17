@@ -8,9 +8,9 @@ import { CheckSquare, Square, Trash2, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const PRIORITY_DOT: Record<Todo['priority'], string> = {
-  high: 'bg-rose-500',
-  medium: 'bg-amber-500',
-  low: 'bg-emerald-500',
+  high: 'bg-destructive',
+  medium: 'bg-warning',
+  low: 'bg-success',
 };
 
 const PRIORITY_ORDER: Record<Todo['priority'], number> = {
@@ -88,7 +88,7 @@ export function TodoWidget() {
               </div>
               <button
                 onClick={() => remove(todo.id)}
-                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-rose-400"
+                className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -119,7 +119,7 @@ export function TodoWidget() {
                     </button>
                     <p className="text-sm text-muted-foreground line-through flex-1">{todo.text}</p>
                     <button onClick={() => remove(todo.id)}
-                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-rose-400">
+                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

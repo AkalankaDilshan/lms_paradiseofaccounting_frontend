@@ -208,7 +208,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                         </Button>
                       </a>
                       {isTeacher && (
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-400 shrink-0"
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive shrink-0"
                           onClick={() => deleteMaterial.mutate(m.materialId)}>
                           <X className="w-3.5 h-3.5" />
                         </Button>
