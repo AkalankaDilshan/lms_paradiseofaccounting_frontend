@@ -5,6 +5,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignupPage } from './pages/auth/SignupPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { PendingApprovalPage } from './pages/auth/PendingApprovalPage';
 import { StudentDashboard } from './pages/student/StudentDashboard';
 import { StudentProfile } from './pages/student/StudentProfile';
 import { QuizAttempt } from './pages/student/QuizAttempt';
@@ -44,20 +45,29 @@ function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allow
     );
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role && !allowedRoles.includes(user.role)) return <Navigate to="/unauthorized" replace />;
+  // Authenticated but no recognized Cognito group at all — a self-signed-up
+  // student still awaiting SuperAdmin/TA approval (see post_confirmation.py).
+  if (!user?.role) return <Navigate to="/pending-approval" replace />;
+  // Recognized role, just the wrong area (e.g. a TA hitting /student/*) —
+  // send them to their own home instead of the pending-approval message.
+  if (!allowedRoles.includes(user.role)) return <Navigate to={user.role === 'Student' ? '/student' : '/teacher'} replace />;
 
   return children;
 }
 
 function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
-  const home = user?.role === 'Student' ? '/student' : '/teacher';
+  const home = !user?.role ? '/pending-approval' : user.role === 'Student' ? '/student' : '/teacher';
 
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to={home} /> : <LoginPage />} />
       <Route path="/signup" element={isAuthenticated ? <Navigate to={home} /> : <SignupPage />} />
       <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={home} /> : <ForgotPasswordPage />} />
+      <Route
+        path="/pending-approval"
+        element={!isAuthenticated ? <Navigate to="/login" replace /> : user?.role ? <Navigate to={home} replace /> : <PendingApprovalPage />}
+      />
 
       <Route element={<AppLayout />}>
         <Route

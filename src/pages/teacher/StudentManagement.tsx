@@ -85,6 +85,16 @@ export function StudentManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
   });
 
+  // Self-registered students start status="pending" with no Cognito "Student"
+  // group (see post_confirmation.py) — approving adds the group and flips
+  // them to active so their next session refresh unlocks full access.
+  const approveStudent = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiClient.post(`/admin/students/${userId}/approve`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
+  });
+
   const addGroupMutation = useMutation({
     mutationFn: async ({ userId, group }: { userId: string; group: string }) => {
       await apiClient.post(`/admin/students/${userId}/groups`, { group });
@@ -117,6 +127,7 @@ export function StudentManagement() {
   const filtered = (data ?? []).filter(s =>
     `${s.firstName} ${s.lastName} ${s.email} ${s.school} ${s.center}`.toLowerCase().includes(search.toLowerCase())
   );
+  const pendingCount = (data ?? []).filter(s => s.status === 'pending').length;
 
   if (isLoading) return (
     <div className="space-y-4">
@@ -137,8 +148,11 @@ export function StudentManagement() {
         <div>
           <p className="text-sm font-medium text-primary">Admin</p>
           <h1 className="text-3xl font-bold tracking-tight">Student Management</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-muted-foreground flex flex-wrap items-center gap-2">
             {(data ?? []).length} students enrolled. Manage enrollments, CSV imports, and groups.
+            {pendingCount > 0 && (
+              <Badge variant="warning">{pendingCount} awaiting approval</Badge>
+            )}
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -220,12 +234,23 @@ export function StudentManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={student.status === 'active' ? 'success' : 'destructive'}>
-                        {student.status}
+                      <Badge variant={
+                        student.status === 'pending' ? 'warning'
+                          : student.status === 'active' ? 'success'
+                          : 'destructive'
+                      }>
+                        {student.status === 'pending' ? 'Pending Approval' : student.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {student.status === 'pending' && (
+                          <Button variant="ghost" size="sm" className="text-success hover:text-success"
+                            onClick={() => approveStudent.mutate(student.userId)}
+                            disabled={approveStudent.isPending}>
+                            Approve
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm"
                           onClick={() => setShowGroupPanel(student)}>
                           <Users className="w-4 h-4 mr-1" /> Groups

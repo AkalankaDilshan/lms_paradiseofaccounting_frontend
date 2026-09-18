@@ -56,8 +56,15 @@ export function LoginPage() {
           const currentUser = userPool?.getCurrentUser();
           currentUser?.getSession((_err: any, session: any) => {
             const groups: string[] = session?.getIdToken().decodePayload()['cognito:groups'] || [];
-            const isTeacher = groups.includes('SuperAdmin') || groups.includes('TA');
-            navigate(isTeacher ? '/teacher' : '/student');
+            if (groups.includes('SuperAdmin') || groups.includes('TA')) {
+              navigate('/teacher');
+            } else if (groups.includes('Student')) {
+              navigate('/student');
+            } else {
+              // No recognized group yet — a self-signed-up student still
+              // awaiting SuperAdmin/TA approval (see post_confirmation.py).
+              navigate('/pending-approval');
+            }
           });
         });
       },

@@ -255,9 +255,9 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         center: 'GINIGATHHENA',
         address: 'Ginigathhena',
         role: 'Student',
-        status: 'active',
+        status: 'pending',
         verificationStatus: 'pending_review',
-        groups: ['2028-GINIGATHHENA'],
+        groups: [],
       },
     ],
   });
@@ -278,6 +278,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   mock.onPost('/admin/students').reply(201, { userId: 'u-new', success: true });
   mock.onPut(/\/admin\/students\/[^/]+/).reply(200, { updated: true });
   mock.onDelete(/\/admin\/students\/[^/]+/).reply(200, { suspended: true });
+  mock.onPost(/\/admin\/students\/[^/]+\/approve/).reply(200, { approved: true });
   mock.onPost(/\/admin\/students\/[^/]+\/groups/).reply(200, { added: true });
   mock.onDelete(/\/admin\/students\/[^/]+\/groups\/[^/]+/).reply(200, { removed: true });
   mock.onPost('/admin/students/csv').reply(200, {

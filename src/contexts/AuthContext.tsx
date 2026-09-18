@@ -40,6 +40,13 @@ interface AuthContextType {
   idToken: string | null;
   signOut: () => void;
   refreshSession: () => Promise<void>;
+  /**
+   * Forces a real token refresh against Cognito (not just the locally cached
+   * session), so a pending student's role claim picks up right after a
+   * SuperAdmin/TA approves them — without waiting for the cached ID token
+   * to expire or requiring a full sign-out/sign-in.
+   */
+  forceRefreshSession: () => Promise<void>;
   signInDemo: (role: DemoRole) => void;
   switchRole: (role: DemoRole) => void;
 }
@@ -96,6 +103,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  const forceRefreshSession = useCallback(async () => {
+    const cognitoUser = userPool?.getCurrentUser();
+    if (!cognitoUser) return;
+    await new Promise<void>((resolve) => {
+      cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+        if (err || !session) {
+          resolve();
+          return;
+        }
+        cognitoUser.refreshSession(session.getRefreshToken(), (refreshErr: Error | null, newSession: CognitoUserSession | null) => {
+          if (!refreshErr && newSession) {
+            const token = newSession.getIdToken().getJwtToken();
+            const payload = newSession.getIdToken().decodePayload();
+            const role = (payload['cognito:groups']?.[0] as User['role']) || null;
+            setUser({ username: cognitoUser.getUsername(), sub: payload.sub || '', email: (payload.email as string) || '', role });
+            setIdToken(token);
+          }
+          resolve();
+        });
+      });
+    });
+  }, []);
+
   useEffect(() => {
     void fetchSession();
   }, [fetchSession]);
@@ -125,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         idToken,
         signOut,
         refreshSession: fetchSession,
+        forceRefreshSession,
         signInDemo,
         switchRole,
       }}

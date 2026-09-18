@@ -132,8 +132,12 @@ export function SignupPage() {
                 <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
               </div>
               <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">Account Created!</h1>
-              <p className="text-muted-foreground mb-8 text-center">
+              <p className="text-muted-foreground mb-2 text-center">
                 Please check your email to verify your account before logging in.
+              </p>
+              <p className="text-muted-foreground mb-8 text-center">
+                After that, a SuperAdmin or TA still needs to approve you as an enrolled student —
+                you'll see a "waiting for approval" screen when you log in until then.
               </p>
 
               {/* Android PWA Install */}
