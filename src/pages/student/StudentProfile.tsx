@@ -22,6 +22,7 @@ interface StudentProfile {
   phone: string;
   school: string;
   examYear: number;
+  center: string;
   address: string;
   role: string;
   status: string;
@@ -162,6 +163,7 @@ export function StudentProfile() {
             <InfoField icon={Mail} label="Email" value={data.email} />
             <InfoField icon={School} label="School" value={data.school} />
             <InfoField icon={CalendarDays} label="Exam Year" value={String(data.examYear)} />
+            <InfoField icon={MapPin} label="Class Center" value={data.center} />
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-wider">

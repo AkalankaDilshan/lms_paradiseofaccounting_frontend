@@ -13,8 +13,17 @@ import { Badge } from '../../components/ui/badge';
 import { GroupBadge } from '../../components/GroupBadge';
 
 const GROUPS = [
-  'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
-  'G13-GINIGATHHENA', 'G13-HATTON', 'G13-NAWALAPITIYA', 'REVISION',
+  '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
+  '2027-GINIGATHHENA', '2027-HATTON', '2027-NAWALAPITIYA', '2027-ONLINE', 'REVISION',
+];
+
+// Keep in sync with EXAM_YEARS / CLASS_CENTERS in Backend/shared/models.py.
+const EXAM_YEARS = ['2027', '2028'];
+const CLASS_CENTERS = [
+  { value: 'GINIGATHHENA', label: 'Ginigathhena' },
+  { value: 'HATTON', label: 'Hatton' },
+  { value: 'NAWALAPITIYA', label: 'Nawalapitiya' },
+  { value: 'ONLINE', label: 'Online (Islandwide)' },
 ];
 
 interface Student {
@@ -25,6 +34,7 @@ interface Student {
   phone: string;
   school: string;
   examYear: number;
+  center: string;
   address: string;
   role: string;
   status: string;
@@ -43,7 +53,7 @@ export function StudentManagement() {
   // Add student form state
   const [addForm, setAddForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    school: '', examYear: '', address: '', password: '',
+    school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '', password: '',
   });
 
   const { data, isLoading } = useQuery({
@@ -64,7 +74,7 @@ export function StudentManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowAddModal(false);
-      setAddForm({ firstName: '', lastName: '', email: '', phone: '', school: '', examYear: '', address: '', password: '' });
+      setAddForm({ firstName: '', lastName: '', email: '', phone: '', school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '', password: '' });
     },
   });
 
@@ -105,7 +115,7 @@ export function StudentManagement() {
   });
 
   const filtered = (data ?? []).filter(s =>
-    `${s.firstName} ${s.lastName} ${s.email} ${s.school}`.toLowerCase().includes(search.toLowerCase())
+    `${s.firstName} ${s.lastName} ${s.email} ${s.school} ${s.center}`.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) return (
@@ -193,7 +203,11 @@ export function StudentManagement() {
                         <Avatar id={student.userId} name={`${student.firstName} ${student.lastName}`} size="sm" />
                         <div>
                           <p className="font-medium text-sm">{student.firstName} {student.lastName}</p>
-                          <p className="text-xs text-muted-foreground">{student.school}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {student.school}
+                            {student.examYear ? ` · A/L ${student.examYear}` : ''}
+                            {student.center ? ` · ${student.center}` : ''}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -262,8 +276,6 @@ export function StudentManagement() {
                   { id: 'password', label: 'Temporary Password', type: 'password' },
                   { id: 'phone', label: 'Phone' },
                   { id: 'school', label: 'School' },
-                  { id: 'examYear', label: 'A/L Exam Year', type: 'number' },
-                  { id: 'address', label: 'Address (Optional)' },
                 ].map(f => (
                   <div key={f.id} className="space-y-2">
                     <Label htmlFor={f.id}>{f.label}</Label>
@@ -272,6 +284,30 @@ export function StudentManagement() {
                       className="h-10" />
                   </div>
                 ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="examYear">A/L Exam Year</Label>
+                    <select id="examYear" value={addForm.examYear}
+                      onChange={e => setAddForm(prev => ({ ...prev, examYear: e.target.value }))}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                      {EXAM_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="center">Class Center</Label>
+                    <select id="center" value={addForm.center}
+                      onChange={e => setAddForm(prev => ({ ...prev, center: e.target.value }))}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                      {CLASS_CENTERS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address (Optional)</Label>
+                  <Input id="address" value={addForm.address}
+                    onChange={e => setAddForm(prev => ({ ...prev, address: e.target.value }))}
+                    className="h-10" />
+                </div>
                 <div className="flex gap-3 pt-2">
                   <Button onClick={() => addStudent.mutate()} disabled={addStudent.isPending} className="flex-1">
                     {addStudent.isPending ? 'Adding...' : 'Add Student'}

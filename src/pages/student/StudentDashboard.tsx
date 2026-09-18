@@ -16,7 +16,7 @@ interface Material { materialId: string; title: string; description: string; fil
 const recentAttempts = [
   { id: 'att-1', title: 'Partnership Accounts — Paper 1', date: '14 Sep 2026', score: 86, status: 'Completed' },
   { id: 'att-2', title: 'Depreciation Methods — Revision Paper', date: '11 Sep 2026', score: 72, status: 'Completed' },
-  { id: 'att-3', title: 'Control Accounts — Grade 13', date: '08 Sep 2026', score: 91, status: 'Completed' },
+  { id: 'att-3', title: 'Control Accounts — 2027 Batch', date: '08 Sep 2026', score: 91, status: 'Completed' },
 ];
 
 const FILE_ICONS: Record<string, typeof FileText> = { pdf: FileText, image: FileImage, doc: File };
@@ -61,7 +61,7 @@ export function StudentDashboard() {
         <div className="flex items-center gap-3">
           <Avatar id={user?.sub || 'student'} name={user?.username || 'Student'} size="lg" className="h-14 w-14" />
           <div>
-            <p className="font-semibold">Grade 13</p>
+            <p className="font-semibold">A/L 2027</p>
             <p className="text-sm text-muted-foreground">Hatton group</p>
           </div>
         </div>

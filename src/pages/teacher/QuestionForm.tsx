@@ -193,7 +193,7 @@ export function QuestionForm() {
             <Label htmlFor="tags">Tags (comma-separated)</Label>
             <Input
               id="tags"
-              placeholder="e.g. Assets, Grade 13, Depreciation"
+              placeholder="e.g. Assets, 2027 Batch, Depreciation"
               value={tags}
               onChange={e => setTags(e.target.value)}
               className="h-10"

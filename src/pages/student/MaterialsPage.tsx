@@ -11,8 +11,8 @@ import { GroupBadge } from '../../components/GroupBadge';
 import { groupToggleClasses } from '../../lib/groupColors';
 
 const GROUPS = [
-  'ALL', 'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
-  'G13-GINIGATHHENA', 'G13-HATTON', 'G13-NAWALAPITIYA', 'REVISION',
+  'ALL', '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
+  '2027-GINIGATHHENA', '2027-HATTON', '2027-NAWALAPITIYA', '2027-ONLINE', 'REVISION',
 ];
 
 const FILE_ICONS: Record<string, typeof FileText> = {
@@ -249,7 +249,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                 </div>
                 <div className="space-y-2">
                   <Label>Tags (comma-separated)</Label>
-                  <Input value={formTags} onChange={e => setFormTags(e.target.value)} placeholder="e.g. Partnership, Grade 13" className="h-10" />
+                  <Input value={formTags} onChange={e => setFormTags(e.target.value)} placeholder="e.g. Partnership, 2027 Batch" className="h-10" />
                 </div>
                 <div className="space-y-2">
                   <Label>Target Groups</Label>

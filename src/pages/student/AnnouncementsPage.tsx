@@ -11,8 +11,8 @@ import { GroupBadge } from '../../components/GroupBadge';
 import { groupToggleClasses } from '../../lib/groupColors';
 
 const GROUPS = [
-  'ALL', 'G12-GINIGATHHENA', 'G12-HATTON', 'G12-NAWALAPITIYA',
-  'G13-GINIGATHHENA', 'G13-HATTON', 'G13-NAWALAPITIYA', 'REVISION',
+  'ALL', '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
+  '2027-GINIGATHHENA', '2027-HATTON', '2027-NAWALAPITIYA', '2027-ONLINE', 'REVISION',
 ];
 
 interface Announcement {

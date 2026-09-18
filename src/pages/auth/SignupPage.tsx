@@ -6,10 +6,33 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 
+// A/L batches currently in progress — update when a new batch starts and the
+// oldest one finishes sitting the exam.
+const EXAM_YEARS = ['2027', '2028'];
+
+// Physical class centers plus the islandwide online batch. Keep in sync with
+// CLASS_CENTERS in Backend/shared/models.py.
+const CLASS_CENTERS = [
+  { value: 'GINIGATHHENA', label: 'Ginigathhena' },
+  { value: 'HATTON', label: 'Hatton' },
+  { value: 'NAWALAPITIYA', label: 'Nawalapitiya' },
+  { value: 'ONLINE', label: 'Online (Islandwide)' },
+];
+
+// Cognito's standard `phone_number` attribute requires E.164 (e.g.
+// +94771234567) or it rejects the whole signup — normalize the common local
+// formats (0771234567 / 94771234567) so students can type what's on their SIM.
+function toE164LK(phone: string): string {
+  const digits = phone.replace(/[^\d]/g, '');
+  if (digits.startsWith('94')) return `+${digits}`;
+  if (digits.startsWith('0')) return `+94${digits.slice(1)}`;
+  return `+94${digits}`;
+}
+
 export function SignupPage() {
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', email: '', password: '', 
-    phone: '', school: '', examYear: '', address: ''
+    firstName: '', lastName: '', email: '', password: '',
+    phone: '', school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -56,14 +79,18 @@ export function SignupPage() {
       return;
     }
 
+    // Standard OIDC attributes (given_name/family_name/phone_number/address) are
+    // read directly by the PostConfirmation trigger (post_confirmation.py) —
+    // only the fields with no built-in equivalent go through custom:*.
     const attributeList = [
       new CognitoUserAttribute({ Name: 'email', Value: formData.email }),
-      new CognitoUserAttribute({ Name: 'custom:firstName', Value: formData.firstName }),
-      new CognitoUserAttribute({ Name: 'custom:lastName', Value: formData.lastName }),
-      new CognitoUserAttribute({ Name: 'custom:phone', Value: formData.phone }),
+      new CognitoUserAttribute({ Name: 'given_name', Value: formData.firstName }),
+      new CognitoUserAttribute({ Name: 'family_name', Value: formData.lastName }),
+      new CognitoUserAttribute({ Name: 'phone_number', Value: toE164LK(formData.phone) }),
       new CognitoUserAttribute({ Name: 'custom:school', Value: formData.school }),
       new CognitoUserAttribute({ Name: 'custom:examYear', Value: formData.examYear }),
-      new CognitoUserAttribute({ Name: 'custom:address', Value: formData.address }),
+      new CognitoUserAttribute({ Name: 'custom:center', Value: formData.center }),
+      new CognitoUserAttribute({ Name: 'address', Value: formData.address }),
     ];
 
     userPool.signUp(formData.email, formData.password, attributeList, [], (err) => {
@@ -76,7 +103,7 @@ export function SignupPage() {
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
@@ -166,17 +193,29 @@ export function SignupPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" required value={formData.phone} onChange={handleChange} className="h-11" />
+                    <Input id="phone" type="tel" required placeholder="07XXXXXXXX" value={formData.phone} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="examYear">A/L Exam Year</Label>
-                    <Input id="examYear" type="number" required value={formData.examYear} onChange={handleChange} className="h-11" />
+                    <select id="examYear" required value={formData.examYear} onChange={handleChange}
+                      className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                      {EXAM_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="school">School</Label>
-                  <Input id="school" required value={formData.school} onChange={handleChange} className="h-11" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="school">School</Label>
+                    <Input id="school" required value={formData.school} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="center">Class Center</Label>
+                    <select id="center" required value={formData.center} onChange={handleChange}
+                      className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                      {CLASS_CENTERS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -53,11 +53,11 @@ export const monthlySeries = [
 ];
 
 export const weakTopics = [
-  { topic: 'Bank reconciliation', group: 'Grade 13', wrongRate: 62, attempts: 48 },
-  { topic: 'Control accounts', group: 'Grade 12', wrongRate: 48, attempts: 61 },
+  { topic: 'Bank reconciliation', group: '2027', wrongRate: 62, attempts: 48 },
+  { topic: 'Control accounts', group: '2028', wrongRate: 48, attempts: 61 },
   { topic: 'Depreciation methods', group: 'Revision', wrongRate: 41, attempts: 37 },
-  { topic: 'Partnership accounts', group: 'Grade 13', wrongRate: 33, attempts: 54 },
-  { topic: 'Incomplete records', group: 'Grade 12', wrongRate: 29, attempts: 42 },
+  { topic: 'Partnership accounts', group: '2027', wrongRate: 33, attempts: 54 },
+  { topic: 'Incomplete records', group: '2028', wrongRate: 29, attempts: 42 },
 ];
 
 export type AttemptStatus = 'Completed' | 'In progress' | 'Missed';
@@ -74,22 +74,22 @@ export interface QuizAttemptRow {
 }
 
 export const recentAttempts: QuizAttemptRow[] = [
-  { id: 'ATT-1048', studentId: 'student-kasun', student: 'Kasun Perera', quiz: 'Partnership Accounts — Paper 1', group: 'Grade 13 · Hatton', score: '86%', status: 'Completed', date: '16 Sep' },
-  { id: 'ATT-1047', studentId: 'student-tharushi', student: 'Tharushi Fernando', quiz: 'Depreciation Methods', group: 'Grade 13 · Hatton', score: '72%', status: 'Completed', date: '16 Sep' },
-  { id: 'ATT-1046', studentId: 'student-nimal', student: 'Nimal Silva', quiz: 'Control Accounts — Grade 13', group: 'Revision · Nawalapitiya', score: '—', status: 'In progress', date: '16 Sep' },
-  { id: 'ATT-1045', studentId: 'student-sachini', student: 'Sachini Bandara', quiz: 'Final Accounts — Paper 2', group: 'Grade 12 · Ginigathhena', score: '—', status: 'Missed', date: '15 Sep' },
-  { id: 'ATT-1044', studentId: 'student-akalanka', student: 'Akalanka Dilshan', quiz: 'Partnership Accounts — Paper 1', group: 'Grade 13 · Hatton', score: '91%', status: 'Completed', date: '15 Sep' },
-  { id: 'ATT-1043', studentId: 'student-ishara', student: 'Ishara Jayasinghe', quiz: 'Bank Reconciliation', group: 'Grade 12 · Ginigathhena', score: '64%', status: 'Completed', date: '15 Sep' },
+  { id: 'ATT-1048', studentId: 'student-kasun', student: 'Kasun Perera', quiz: 'Partnership Accounts — Paper 1', group: '2027 · Hatton', score: '86%', status: 'Completed', date: '16 Sep' },
+  { id: 'ATT-1047', studentId: 'student-tharushi', student: 'Tharushi Fernando', quiz: 'Depreciation Methods', group: '2027 · Hatton', score: '72%', status: 'Completed', date: '16 Sep' },
+  { id: 'ATT-1046', studentId: 'student-nimal', student: 'Nimal Silva', quiz: 'Control Accounts — 2027 Batch', group: 'Revision · Nawalapitiya', score: '—', status: 'In progress', date: '16 Sep' },
+  { id: 'ATT-1045', studentId: 'student-sachini', student: 'Sachini Bandara', quiz: 'Final Accounts — Paper 2', group: '2028 · Ginigathhena', score: '—', status: 'Missed', date: '15 Sep' },
+  { id: 'ATT-1044', studentId: 'student-akalanka', student: 'Akalanka Dilshan', quiz: 'Partnership Accounts — Paper 1', group: '2027 · Hatton', score: '91%', status: 'Completed', date: '15 Sep' },
+  { id: 'ATT-1043', studentId: 'student-ishara', student: 'Ishara Jayasinghe', quiz: 'Bank Reconciliation', group: '2028 · Ginigathhena', score: '64%', status: 'Completed', date: '15 Sep' },
   { id: 'ATT-1042', studentId: 'student-dilani', student: 'Dilani Wijesinghe', quiz: 'Incomplete Records', group: 'Revision · Nawalapitiya', score: '—', status: 'In progress', date: '14 Sep' },
-  { id: 'ATT-1041', studentId: 'student-ruwan', student: 'Ruwan Fernando', quiz: 'Control Accounts — Grade 13', group: 'Grade 13 · Hatton', score: '55%', status: 'Completed', date: '14 Sep' },
-  { id: 'ATT-1040', studentId: 'student-malsha', student: 'Malsha Perera', quiz: 'Depreciation Methods', group: 'Grade 12 · Ginigathhena', score: '—', status: 'Missed', date: '13 Sep' },
-  { id: 'ATT-1039', studentId: 'student-kasun2', student: 'Hasini Silva', quiz: 'Final Accounts — Paper 2', group: 'Grade 12 · Ginigathhena', score: '78%', status: 'Completed', date: '13 Sep' },
+  { id: 'ATT-1041', studentId: 'student-ruwan', student: 'Ruwan Fernando', quiz: 'Control Accounts — 2027 Batch', group: '2027 · Hatton', score: '55%', status: 'Completed', date: '14 Sep' },
+  { id: 'ATT-1040', studentId: 'student-malsha', student: 'Malsha Perera', quiz: 'Depreciation Methods', group: '2028 · Ginigathhena', score: '—', status: 'Missed', date: '13 Sep' },
+  { id: 'ATT-1039', studentId: 'student-kasun2', student: 'Hasini Silva', quiz: 'Final Accounts — Paper 2', group: '2028 · Ginigathhena', score: '78%', status: 'Completed', date: '13 Sep' },
   { id: 'ATT-1038', studentId: 'student-nuwan', student: 'Nuwan Bandara', quiz: 'Partnership Accounts — Paper 1', group: 'Revision · Nawalapitiya', score: '88%', status: 'Completed', date: '12 Sep' },
-  { id: 'ATT-1037', studentId: 'student-pavithra', student: 'Pavithra Senanayake', quiz: 'Bank Reconciliation', group: 'Grade 13 · Hatton', score: '69%', status: 'Completed', date: '12 Sep' },
+  { id: 'ATT-1037', studentId: 'student-pavithra', student: 'Pavithra Senanayake', quiz: 'Bank Reconciliation', group: '2027 · Hatton', score: '69%', status: 'Completed', date: '12 Sep' },
 ];
 
 export const demoNotifications = [
-  { id: 'n1', title: 'Nimal missed Final Accounts — Paper 2', body: 'Grade 12 · Ginigathhena', time: '12 min ago' },
-  { id: 'n2', title: 'Tharushi submitted Depreciation Methods', body: 'Score 72% · Grade 13', time: '34 min ago' },
+  { id: 'n1', title: 'Nimal missed Final Accounts — Paper 2', body: '2028 · Ginigathhena', time: '12 min ago' },
+  { id: 'n2', title: 'Tharushi submitted Depreciation Methods', body: 'Score 72% · 2027', time: '34 min ago' },
   { id: 'n3', title: 'Revision mock window opens Thursday', body: '24 Sep · all-day sitting', time: '1 hr ago' },
 ];

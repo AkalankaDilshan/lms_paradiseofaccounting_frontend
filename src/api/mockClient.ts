@@ -11,7 +11,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     {
       quizId: 'quiz-1',
       title: 'ගිණුම්කරණ මූලධර්ම — Paper 1', // Accounting Principles Paper 1
-      allowedGroups: ['G13-HATTON', 'G13-GINIGATHHENA'],
+      allowedGroups: ['2027-HATTON', '2027-GINIGATHHENA'],
       openAt: new Date().toISOString(),
       closeAt: new Date(Date.now() + 86400000).toISOString(),
       durationMinutes: 30,
@@ -21,7 +21,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     {
       quizId: 'quiz-2',
       title: 'උසස් ලෙජර් ඇතුළත් කිරීම් — Paper 2', // Advanced Ledger Entries
-      allowedGroups: ['G12-HATTON'],
+      allowedGroups: ['2028-HATTON'],
       openAt: new Date().toISOString(),
       closeAt: new Date(Date.now() + 86400000 * 2).toISOString(),
       durationMinutes: 45,
@@ -196,7 +196,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         ],
         correctAnswerIndex: 0,
         explanation: 'SLM = (ලබා ගත් මිල - ශේෂ අගය) / ප්‍රයෝජනවත් ජීවිතය.',
-        tags: ['Depreciation', 'Grade 13'],
+        tags: ['Depreciation', '2027 Batch'],
         archived: false,
         createdAt: '2026-09-03T08:00:00Z',
       },
@@ -223,12 +223,13 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         email: 'kasun@student.lk',
         phone: '+94771234567',
         school: 'Hatton National College',
-        examYear: 2026,
+        examYear: 2027,
+        center: 'HATTON',
         address: 'Hatton',
         role: 'Student',
         status: 'active',
         verificationStatus: 'auto_approved',
-        groups: ['G13-HATTON'],
+        groups: ['2027-HATTON'],
       },
       {
         userId: 'u2',
@@ -236,12 +237,13 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         email: 'nimal@student.lk',
         phone: '+94779876543',
         school: 'Nawalapitiya MMV',
-        examYear: 2026,
+        examYear: 2027,
+        center: 'NAWALAPITIYA',
         address: 'Nawalapitiya',
         role: 'Student',
         status: 'active',
         verificationStatus: 'auto_approved',
-        groups: ['G13-NAWALAPITIYA'],
+        groups: ['2027-NAWALAPITIYA'],
       },
       {
         userId: 'u3',
@@ -249,12 +251,13 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         email: 'sanduni@student.lk',
         phone: '+94765432109',
         school: 'Ginigathhena Central College',
-        examYear: 2027,
+        examYear: 2028,
+        center: 'GINIGATHHENA',
         address: 'Ginigathhena',
         role: 'Student',
         status: 'active',
         verificationStatus: 'pending_review',
-        groups: ['G12-GINIGATHHENA'],
+        groups: ['2028-GINIGATHHENA'],
       },
     ],
   });
@@ -264,12 +267,13 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     email: 'akalanka@student.lk',
     phone: '+94771234567',
     school: 'Hatton National College',
-    examYear: 2026,
+    examYear: 2027,
+    center: 'HATTON',
     address: '123 Main St, Hatton',
     role: 'Student',
     status: 'active',
     verificationStatus: 'auto_approved',
-    groups: ['G13-HATTON'],
+    groups: ['2027-HATTON'],
   });
   mock.onPost('/admin/students').reply(201, { userId: 'u-new', success: true });
   mock.onPut(/\/admin\/students\/[^/]+/).reply(200, { updated: true });
@@ -288,9 +292,9 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     items: [
       {
         announcementId: 'ann-1',
-        title: 'Grade 13 — October Paper Schedule',
-        body: 'ඔක්තෝබර් මාසයේ ප්‍රශ්නාවලිය දිනය නිවේදනය කෙරේ. Grade 13 Hatton group September 28 ට සූදානම් වන්න.',
-        targetGroups: ['G13-HATTON', 'G13-NAWALAPITIYA', 'G13-GINIGATHHENA'],
+        title: '2027 Batch — October Paper Schedule',
+        body: 'ඔක්තෝබර් මාසයේ ප්‍රශ්නාවලිය දිනය නිවේදනය කෙරේ. 2027 Batch Hatton group September 28 ට සූදානම් වන්න.',
+        targetGroups: ['2027-HATTON', '2027-NAWALAPITIYA', '2027-GINIGATHHENA'],
         isPinned: true,
         status: 'published',
         createdAt: '2026-09-14T08:00:00Z',
@@ -306,9 +310,9 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
       },
       {
         announcementId: 'ann-3',
-        title: 'Grade 12 — Partnership Accounts Chapter Complete',
-        body: 'Grade 12 students: Partnership accounts chapter is now complete. Please review your notes and attempt the practice quiz.',
-        targetGroups: ['G12-HATTON', 'G12-NAWALAPITIYA', 'G12-GINIGATHHENA'],
+        title: '2028 Batch — Partnership Accounts Chapter Complete',
+        body: '2028 Batch students: Partnership accounts chapter is now complete. Please review your notes and attempt the practice quiz.',
+        targetGroups: ['2028-HATTON', '2028-NAWALAPITIYA', '2028-GINIGATHHENA'],
         isPinned: false,
         status: 'published',
         createdAt: '2026-09-10T09:00:00Z',
@@ -325,7 +329,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   mock.onGet('/payments').reply(200, {
     items: [
       {
-        userId: 'u1', firstName: 'Kasun', lastName: 'Perera', group: 'G13-HATTON',
+        userId: 'u1', firstName: 'Kasun', lastName: 'Perera', group: '2027-HATTON',
         currentMonth: { status: 'paid', paidAt: '2026-09-05T10:00:00Z', amount: 2500 },
         history: [
           { month: '2026-09', status: 'paid' },
@@ -334,7 +338,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         ]
       },
       {
-        userId: 'u2', firstName: 'Nimal', lastName: 'Silva', group: 'G13-NAWALAPITIYA',
+        userId: 'u2', firstName: 'Nimal', lastName: 'Silva', group: '2027-NAWALAPITIYA',
         currentMonth: { status: 'pending', paidAt: null, amount: 2500 },
         history: [
           { month: '2026-09', status: 'pending' },
@@ -343,7 +347,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         ]
       },
       {
-        userId: 'u3', firstName: 'Sanduni', lastName: 'Fernando', group: 'G12-GINIGATHHENA',
+        userId: 'u3', firstName: 'Sanduni', lastName: 'Fernando', group: '2028-GINIGATHHENA',
         currentMonth: { status: 'overdue', paidAt: null, amount: 2500 },
         history: [
           { month: '2026-09', status: 'overdue' },
@@ -374,9 +378,9 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         materialId: 'm1',
         title: 'Chapter 5 — Partnership Accounts Notes',
         description: 'සම්පූර්ණ සටහන් (Comprehensive notes in Sinhala)',
-        targetGroups: ['G13-HATTON', 'G13-GINIGATHHENA'],
+        targetGroups: ['2027-HATTON', '2027-GINIGATHHENA'],
         fileKey: 'https://example.com/materials/partnership-notes.pdf',
-        fileType: 'pdf', fileSizeBytes: 2048000, tags: ['Partnership', 'Grade 13'],
+        fileType: 'pdf', fileSizeBytes: 2048000, tags: ['Partnership', '2027 Batch'],
         createdAt: '2026-09-10T08:00:00Z',
       },
       {
@@ -392,9 +396,9 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         materialId: 'm3',
         title: 'Depreciation Formulas Quick Reference',
         description: 'ක්ෂය ගිණුම්කරණ සූත්‍ර — Quick reference card',
-        targetGroups: ['G12-HATTON', 'G12-NAWALAPITIYA', 'G12-GINIGATHHENA'],
+        targetGroups: ['2028-HATTON', '2028-NAWALAPITIYA', '2028-GINIGATHHENA'],
         fileKey: 'https://example.com/materials/depreciation-ref.pdf',
-        fileType: 'pdf', fileSizeBytes: 512000, tags: ['Depreciation', 'Grade 12'],
+        fileType: 'pdf', fileSizeBytes: 512000, tags: ['Depreciation', '2028 Batch'],
         createdAt: '2026-09-08T08:00:00Z',
       },
     ]
@@ -411,7 +415,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   // ============================================================
   mock.onGet(/\/attendance/).reply(200, {
     date: '2026-09-16',
-    groupId: 'G13-HATTON',
+    groupId: '2027-HATTON',
     records: { 'u1': 'present', 'u2': 'absent', 'u3': 'present' }
   });
   mock.onPost('/attendance').reply(201, { saved: true });
@@ -441,7 +445,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         body: 'ශිෂ්‍යයන්ට දැනුම් දෙනු ලැබේ: ඉදිරි සෙනසුරාදා ප.ව. 2ට revision class පවත්වනු ලැබේ.',
         fromUserId: 'demo-teacher-sub',
         sentAt: '2026-09-13T14:00:00Z',
-        targetGroups: ['G13-HATTON', 'G13-NAWALAPITIYA'],
+        targetGroups: ['2027-HATTON', '2027-NAWALAPITIYA'],
       },
     ]
   });
