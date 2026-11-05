@@ -44,7 +44,8 @@ export function QuizList() {
 
   const archiveQuiz = useMutation({
     mutationFn: async (quizId: string) => {
-      await apiClient.put(`/quizzes/${quizId}`, { archived: true });
+      // DELETE soft-archives (sets archived=true) and removes the quiz's GSI3 group projections
+      await apiClient.delete(`/quizzes/${quizId}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teacherQuizzes'] }),
   });
