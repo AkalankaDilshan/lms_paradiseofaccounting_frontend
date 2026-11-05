@@ -97,7 +97,7 @@ export function StudentManagement() {
 
   const addGroupMutation = useMutation({
     mutationFn: async ({ userId, group }: { userId: string; group: string }) => {
-      await apiClient.post(`/admin/students/${userId}/groups`, { group });
+      await apiClient.post(`/admin/students/${userId}/groups`, { groupId: group });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
   });

@@ -42,8 +42,8 @@ export function QuestionForm() {
       const q = all.find((x: any) => x.questionId === questionId);
       if (q) {
         setQuestionText(q.questionText);
-        setOptions(q.options);
-        setCorrectIndex(q.correctAnswerIndex);
+        setOptions((q.options || []).map((o: OptionDraft, i: number) => ({ index: i, text: o.text })));
+        setCorrectIndex(q.correctOptionIndex ?? 0);
         setExplanation(q.explanation || '');
         setTags((q.tags || []).join(', '));
         setImageKey(q.imageKey || '');
@@ -53,12 +53,19 @@ export function QuestionForm() {
     enabled: isEdit,
   });
 
+  // Blank rows are dropped and the rest renumbered, so the correct answer is
+  // re-pointed at its new position (-1 if the marked option was left blank)
+  const filledOptions = options
+    .map((o, pos) => ({ text: o.text.trim(), pos }))
+    .filter(o => o.text);
+  const correctFilledIndex = filledOptions.findIndex(o => o.pos === correctIndex);
+
   const saveQuestion = useMutation({
     mutationFn: async () => {
       const payload = {
         questionText,
-        options: options.filter(o => o.text.trim()),
-        correctAnswerIndex: correctIndex,
+        options: filledOptions.map((o, i) => ({ index: i, text: o.text })),
+        correctOptionIndex: correctFilledIndex,
         explanation,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         imageKey: imageKey || undefined,
@@ -81,7 +88,9 @@ export function QuestionForm() {
   const removeOption = (idx: number) => {
     if (options.length <= 2) return;
     setOptions(prev => prev.filter((_, i) => i !== idx).map((o, i) => ({ ...o, index: i })));
-    if (correctIndex >= options.length - 1) setCorrectIndex(0);
+    // Keep the mark on the same option as rows above it shift up
+    if (idx === correctIndex) setCorrectIndex(0);
+    else if (idx < correctIndex) setCorrectIndex(correctIndex - 1);
   };
 
   const handleImageUpload = async (file: File) => {
@@ -105,7 +114,8 @@ export function QuestionForm() {
 
   const handleSubmit = () => {
     if (!questionText.trim()) { setError('Question text is required.'); return; }
-    if (options.filter(o => o.text.trim()).length < 2) { setError('At least 2 options are required.'); return; }
+    if (filledOptions.length < 2) { setError('At least 2 options are required.'); return; }
+    if (correctFilledIndex === -1) { setError('The option marked as correct is empty.'); return; }
     setError('');
     saveQuestion.mutate();
   };

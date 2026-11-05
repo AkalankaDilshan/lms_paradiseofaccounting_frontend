@@ -21,6 +21,16 @@ interface Question {
   tags: string[];
 }
 
+// Stored quiz times are UTC ISO strings; <input type="datetime-local"> wants
+// the browser's local wall-clock time ("YYYY-MM-DDTHH:mm"). Slicing the UTC
+// string directly shifted every edited quiz 5h30m earlier on each save in Sri Lanka.
+function toLocalInputValue(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 export function QuizBuilder() {
   const { id: editId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -59,8 +69,8 @@ export function QuizBuilder() {
         setTitle(q.title);
         setDurationMinutes(q.durationMinutes);
         setMaxAttempts(q.maxAttempts);
-        setOpenAt(q.openAt?.slice(0, 16) || '');
-        setCloseAt(q.closeAt?.slice(0, 16) || '');
+        setOpenAt(toLocalInputValue(q.openAt));
+        setCloseAt(toLocalInputValue(q.closeAt));
         setAllowedGroups(q.allowedGroups || []);
         setSelectedQuestions(q.questionIds || []);
       }

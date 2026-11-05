@@ -142,6 +142,20 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     ]
   });
 
+  // Quiz analytics (STATS totals + per-question accuracy)
+  mock.onGet(/\/analytics\/quizzes\/[^/]+$/).reply(200, {
+    quizId: 'quiz-1',
+    quizTitle: 'ගිණුම්කරණ මූලධර්ම — Paper 1',
+    totalAttempts: 42,
+    studentsAttempted: 38,
+    averagePercentage: 71.4,
+    perQuestion: [
+      { position: 1, questionId: 'ques_1', questionText: 'මූලික ගිණුම්කරණ සමීකරණය කුමක්ද?', correct: 38, incorrect: 4, accuracy: 90.5 },
+      { position: 2, questionId: 'ques_2', questionText: 'පහත සඳහන් දෑ අතුරින් වත්කමක් වන්නේ කුමක්ද?', correct: 29, incorrect: 13, accuracy: 69.0 },
+      { position: 3, questionId: 'ques_3', questionText: 'ක්‍ෂය ගිනුම්කරණයේ සරල රේඛීය ක්‍රමයේ සූත්‍රය කුමක්ද?', correct: 17, incorrect: 25, accuracy: 40.5 },
+    ],
+  });
+
   // ============================================================
   // 6. Trend — keyed by sub (UUID-style ID)
   // ============================================================
@@ -166,7 +180,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
           { index: 1, text: 'ආදායම් = වියදම්' },
           { index: 2, text: 'ලාභය = විකුණුම්' },
         ],
-        correctAnswerIndex: 0,
+        correctOptionIndex: 0,
         explanation: 'වත්කම් යනු වගකීම් සහ හිමිකම් වල එකතුවයි.',
         tags: ['Basic', 'Accounting Equation'],
         archived: false,
@@ -180,7 +194,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
           { index: 1, text: 'ණයහිමියන්' },
           { index: 2, text: 'බැංකු අයිරාව' },
         ],
-        correctAnswerIndex: 0,
+        correctOptionIndex: 0,
         explanation: 'ණයගැතියන් යනු ව්‍යාපාරයට මුදල් ගෙවීමට ඇති පාර්ශවයන්.',
         tags: ['Assets', 'Basic'],
         archived: false,
@@ -194,7 +208,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
           { index: 1, text: 'Cost × Rate / 100' },
           { index: 2, text: 'Cost - Accumulated Depreciation' },
         ],
-        correctAnswerIndex: 0,
+        correctOptionIndex: 0,
         explanation: 'SLM = (ලබා ගත් මිල - ශේෂ අගය) / ප්‍රයෝජනවත් ජීවිතය.',
         tags: ['Depreciation', '2027 Batch'],
         archived: false,
