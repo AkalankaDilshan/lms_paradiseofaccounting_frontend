@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNowStrict, format } from 'date-fns';
-import { ArrowRight, CalendarClock, CheckCircle2, Clock3, Eye, Hourglass, ListChecks, Play, RotateCcw } from 'lucide-react';
+import { ArrowRight, CalendarClock, CheckCircle2, Clock3, ListChecks } from 'lucide-react';
+import { quizAction, useNow } from '../../lib/quiz';
 import type { StudentQuiz } from '../../api/queries';
 import { percent } from '../../api/queries';
 import { Badge } from '../ui/badge';
@@ -10,28 +10,8 @@ import { Card, CardContent } from '../ui/card';
 import { LiveDot } from '../common';
 import { cn } from '../../lib/utils';
 
-/** Current time, re-rendered every `intervalMs` — for countdowns. */
-export function useNow(intervalMs = 30_000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
-
 function scoreTone(pct: number) {
   return pct >= 75 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-destructive';
-}
-
-/** What the student can do with a quiz right now. */
-export function quizAction(quiz: StudentQuiz) {
-  const attemptsLeft = Math.max(0, quiz.maxAttempts - quiz.attemptsUsed);
-  if (quiz.state === 'open' && quiz.hasOpenAttempt) return { kind: 'resume' as const, label: 'Resume', icon: RotateCcw };
-  if (quiz.state === 'open' && attemptsLeft > 0)
-    return { kind: 'start' as const, label: quiz.attemptsUsed > 0 ? 'Try again' : 'Start quiz', icon: Play };
-  if (quiz.lastAttemptId) return { kind: 'results' as const, label: 'View results', icon: Eye };
-  return { kind: 'none' as const, label: quiz.state === 'upcoming' ? 'Not open yet' : 'Missed', icon: Hourglass };
 }
 
 export function StudentQuizCard({ quiz, compact = false }: { quiz: StudentQuiz; compact?: boolean }) {
