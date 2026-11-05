@@ -47,6 +47,7 @@ export function QuizResults() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['results', quizId, attemptId],
+    meta: { errorToast: false },
     queryFn: async () => (await apiClient.get(`/quizzes/${quizId}/attempts/${attemptId}/results`)).data as ResultsData,
   });
 

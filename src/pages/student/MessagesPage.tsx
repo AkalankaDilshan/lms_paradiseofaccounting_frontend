@@ -40,6 +40,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['messages'],
+    meta: { errorContext: 'load messages' },
     queryFn: async () => {
       const res = await apiClient.get('/messages');
       return (res.data.items as Message[]).sort((a, b) =>
@@ -49,6 +50,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
   });
 
   const sendMessage = useMutation({
+    meta: { errorContext: 'send the message', successMessage: 'Message sent' },
     mutationFn: async () => {
       await apiClient.post('/messages', {
         subject: formSubject,

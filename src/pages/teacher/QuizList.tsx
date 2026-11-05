@@ -9,6 +9,7 @@ import { Plus, Edit2, BarChart3, Archive, ClipboardList, Search, Filter } from '
 import { motion } from 'motion/react';
 import { Badge } from '../../components/ui/badge';
 import { GroupBadge } from '../../components/GroupBadge';
+import { confirm } from '../../lib/feedback';
 
 interface Quiz {
   quizId: string;
@@ -39,10 +40,12 @@ export function QuizList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['teacherQuizzes'],
+    meta: { errorContext: 'load quizzes' },
     queryFn: async () => (await apiClient.get('/quizzes')).data as Quiz[],
   });
 
   const archiveQuiz = useMutation({
+    meta: { errorContext: 'archive the quiz', successMessage: 'Quiz archived', successDetail: 'Students can no longer see it.' },
     mutationFn: async (quizId: string) => {
       // DELETE soft-archives (sets archived=true) and removes the quiz's GSI3 group projections
       await apiClient.delete(`/quizzes/${quizId}`);
@@ -160,7 +163,10 @@ export function QuizList() {
                           variant="outline"
                           size="sm"
                           className="text-muted-foreground"
-                          onClick={() => archiveQuiz.mutate(quiz.quizId)}
+                          onClick={async () => {
+                            if (await confirm({ title: `Archive “${quiz.title}”?`, description: 'Students will no longer see this quiz. Existing attempts and results are kept.', tone: 'warning', confirmLabel: 'Archive quiz' }))
+                              archiveQuiz.mutate(quiz.quizId);
+                          }}
                           disabled={archiveQuiz.isPending}
                         >
                           <Archive className="w-3.5 h-3.5" />

@@ -10,6 +10,7 @@ import { FileText, FileImage, File, Download, Upload, Search, X, Library } from 
 import { motion } from 'motion/react';
 import { GroupBadge } from '../../components/GroupBadge';
 import { groupToggleClasses } from '../../lib/groupColors';
+import { confirm, notifyError } from '../../lib/feedback';
 
 const GROUPS = [
   'ALL', '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -52,7 +53,6 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
   const [typeFilter, setTypeFilter] = useState<'all' | 'pdf' | 'image' | 'doc'>('all');
   const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
-  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   // Upload form
   const [formTitle, setFormTitle] = useState('');
@@ -63,6 +63,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['materials'],
+    meta: { errorContext: 'load study materials' },
     queryFn: async () => {
       const res = await apiClient.get('/materials');
       return res.data.items as Material[];
@@ -70,6 +71,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
   });
 
   const uploadMaterial = useMutation({
+    meta: { errorContext: 'upload the material', successMessage: 'Material uploaded', successDetail: 'Students in the selected groups can now open it.' },
     mutationFn: async () => {
       if (!selectedFile) throw new Error('No file selected');
       setUploadProgress('Getting upload URL...');
@@ -108,10 +110,11 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
       setFormTitle(''); setFormDesc(''); setFormTags('');
       setFormGroups(['ALL']); setSelectedFile(null);
     },
-    onError: () => setUploadProgress('Upload failed. Please try again.'),
+    onError: () => setUploadProgress(''),
   });
 
   const deleteMaterial = useMutation({
+    meta: { errorContext: 'delete the material', successMessage: 'Material deleted' },
     mutationFn: async (id: string) => {
       await apiClient.delete(`/materials/${id}`);
     },
@@ -157,9 +160,6 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
         )}
       </div>
 
-      {downloadError && (
-        <p className="text-sm font-medium text-destructive">Couldn't open "{downloadError}" — please try again.</p>
-      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
@@ -212,12 +212,15 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                     </div>
                     <div className="mt-3 flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1 h-9"
-                        onClick={() => openMaterial(m.materialId).catch(() => setDownloadError(m.title))}>
+                        onClick={() => openMaterial(m.materialId).catch((err) => notifyError(err, `open “${m.title}”`))}>
                         <Download className="w-3.5 h-3.5 mr-1.5" /> Download
                       </Button>
                       {isTeacher && (
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive shrink-0"
-                          onClick={() => deleteMaterial.mutate(m.materialId)}>
+                          onClick={async () => {
+                            if (await confirm({ title: `Delete “${m.title}”?`, description: 'Students will no longer be able to open or download this file.', confirmLabel: 'Delete material' }))
+                              deleteMaterial.mutate(m.materialId);
+                          }}>
                           <X className="w-3.5 h-3.5" />
                         </Button>
                       )}

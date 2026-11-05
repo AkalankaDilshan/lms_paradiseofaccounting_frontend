@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { Mail, Phone, RotateCcw, ShieldCheck, ShieldOff, UserPlus } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useTeachingAssistants } from '../../api/queries';
-import type { StaffUser } from '../../api/queries';
 import { useAuth } from '../../contexts/AuthContext';
 import { Avatar } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
@@ -16,12 +15,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { EmptyState, PageHeader, Skeleton } from '../../components/common';
+import { confirm, notifyError, showAlert } from '../../lib/feedback';
 
 const EMPTY_FORM = { firstName: '', lastName: '', email: '', phone: '' };
-
-function apiError(err: unknown, fallback: string) {
-  return (isAxiosError(err) && err.response?.data?.error) || fallback;
-}
 
 /** SuperAdmin-only: add, suspend and reactivate teaching assistants. */
 export function TeamPage() {
@@ -31,26 +27,36 @@ export function TeamPage() {
   const { data, isLoading } = useTeachingAssistants(isSuperAdmin);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [confirming, setConfirming] = useState<StaffUser | null>(null);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['tas'] });
 
   const addTa = useMutation({
+    meta: { errorToast: false, successMessage: 'Assistant added', successDetail: 'They’ll receive an email with a temporary password.' },
     mutationFn: async () => (await apiClient.post('/admin/tas', form)).data,
     onSuccess: () => {
       setOpen(false);
       setForm(EMPTY_FORM);
       refresh();
     },
-  });
-  const suspend = useMutation({
-    mutationFn: async (userId: string) => apiClient.delete(`/admin/tas/${userId}`),
-    onSuccess: () => {
-      setConfirming(null);
-      refresh();
+    onError: (err) => {
+      if (isAxiosError(err) && err.response?.status === 409) {
+        showAlert({
+          tone: 'warning',
+          title: 'This email is already registered',
+          message: `${form.email.trim()} already has an account in the system (it may belong to a student). Each person needs their own email — use a different one for this assistant.`,
+        });
+        return;
+      }
+      notifyError(err, 'add the assistant');
     },
   });
+  const suspend = useMutation({
+    meta: { errorContext: 'suspend the assistant', successMessage: 'Assistant suspended' },
+    mutationFn: async (userId: string) => apiClient.delete(`/admin/tas/${userId}`),
+    onSuccess: refresh,
+  });
   const reactivate = useMutation({
+    meta: { errorContext: 'reactivate the assistant', successMessage: 'Assistant reactivated' },
     mutationFn: async (userId: string) => apiClient.post(`/admin/tas/${userId}/reactivate`),
     onSuccess: refresh,
   });
@@ -127,7 +133,10 @@ export function TeamPage() {
                       <RotateCcw /> Reactivate
                     </Button>
                   ) : (
-                    <Button variant="destructive" className="w-full" onClick={() => setConfirming(ta)}>
+                    <Button variant="destructive" className="w-full" disabled={suspend.isPending} onClick={async () => {
+                      if (await confirm({ title: `Suspend ${ta.firstName}?`, description: 'They’re signed out everywhere and can’t sign in until you reactivate them. Nothing they created is deleted.', confirmLabel: 'Suspend access' }))
+                        suspend.mutate(ta.userId);
+                    }}>
                       <ShieldOff /> Suspend access
                     </Button>
                   )}
@@ -137,7 +146,6 @@ export function TeamPage() {
           })}
         </div>
       )}
-      {reactivate.isError && <p className="text-sm text-destructive">{apiError(reactivate.error, 'Couldn’t reactivate. Please try again.')}</p>}
 
       {/* Add */}
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) addTa.reset(); }}>
@@ -172,7 +180,6 @@ export function TeamPage() {
               <Label htmlFor="ta-phone">Phone (optional)</Label>
               <Input id="ta-phone" type="tel" placeholder="07X XXX XXXX" value={form.phone} onChange={set('phone')} />
             </div>
-            {addTa.isError && <p className="text-sm text-destructive">{apiError(addTa.error, 'Couldn’t add the assistant.')}</p>}
           </form>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -185,26 +192,6 @@ export function TeamPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm suspend */}
-      <Dialog open={!!confirming} onOpenChange={(o) => { if (!o) { setConfirming(null); suspend.reset(); } }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Suspend {confirming?.firstName}?</DialogTitle>
-            <DialogDescription>
-              They’re signed out everywhere and can’t sign in again until you reactivate them. Nothing they created is deleted.
-            </DialogDescription>
-          </DialogHeader>
-          {suspend.isError && <p className="text-sm text-destructive">{apiError(suspend.error, 'Couldn’t suspend.')}</p>}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirming(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" disabled={suspend.isPending} onClick={() => confirming && suspend.mutate(confirming.userId)}>
-              {suspend.isPending ? 'Suspending…' : 'Suspend'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

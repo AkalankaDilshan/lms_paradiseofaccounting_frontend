@@ -27,6 +27,7 @@ import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { EmptyState, LiveDot, PageHeader, PageSkeleton, StatCard } from '../../components/common';
 import { TodoWidget } from '../../components/TodoWidget';
+import { notifyError, toast } from '../../lib/feedback';
 import { cn } from '../../lib/utils';
 
 const tooltipStyle = {
@@ -53,7 +54,6 @@ export function TeacherDashboard() {
   const [postTitle, setPostTitle] = useState('');
   const [postBody, setPostBody] = useState('');
   const [posting, setPosting] = useState(false);
-  const [postResult, setPostResult] = useState<'ok' | 'error' | null>(null);
 
   const payment = useMemo(() => {
     const rows = payments ?? [];
@@ -80,15 +80,14 @@ export function TeacherDashboard() {
     e.preventDefault();
     if (!postTitle || !postBody) return;
     setPosting(true);
-    setPostResult(null);
     try {
       await apiClient.post('/announcements', { title: postTitle, body: postBody, targetGroups: ['ALL'], isPinned: false, status: 'published' });
       setPostTitle('');
       setPostBody('');
-      setPostResult('ok');
+      toast.success('Announcement posted', 'Every group can see it now.');
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
-    } catch {
-      setPostResult('error');
+    } catch (err) {
+      notifyError(err, 'post the announcement');
     } finally {
       setPosting(false);
     }
@@ -312,11 +311,7 @@ export function TeacherDashboard() {
                   onChange={(e) => setPostBody(e.target.value)}
                   required
                 />
-                <div className="flex items-center justify-between gap-3">
-                  <p className={cn('text-xs', postResult === 'error' ? 'text-destructive' : 'text-success')}>
-                    {postResult === 'ok' && 'Posted ✓'}
-                    {postResult === 'error' && 'Couldn’t post. Please try again.'}
-                  </p>
+                <div className="flex items-center justify-end gap-3">
                   <Button type="submit" disabled={posting || !postTitle || !postBody}>
                     <Send /> {posting ? 'Posting…' : 'Post to all'}
                   </Button>

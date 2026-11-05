@@ -87,6 +87,7 @@ function TakeAttendance({ group }: { group: string }) {
 
   const { data: day } = useQuery({
     queryKey: ['attendance', date, group],
+    meta: { errorContext: 'load attendance for this day' },
     queryFn: async () => (await apiClient.get('/attendance', { params: { date, groupId: group } })).data as { records: Record<string, Mark> },
   });
   useEffect(() => {
@@ -100,6 +101,7 @@ function TakeAttendance({ group }: { group: string }) {
   );
 
   const save = useMutation({
+    meta: { errorContext: 'save attendance', successMessage: 'Attendance saved' },
     mutationFn: async () => apiClient.post('/attendance', { date, groupId: group, records: marks }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
@@ -206,7 +208,6 @@ function TakeAttendance({ group }: { group: string }) {
             <Check className="size-4" /> Saved
           </motion.p>
         )}
-        {save.isError && <p className="text-sm text-destructive">Couldn’t save. Please try again.</p>}
       </div>
     </div>
   );
@@ -216,6 +217,7 @@ function AttendanceReport({ group }: { group: string }) {
   const [month, setMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const { data, isLoading, isError } = useQuery({
     queryKey: ['attendanceReport', group, month],
+    meta: { errorToast: false },
     queryFn: async () => (await apiClient.get('/attendance/report', { params: { groupId: group, month } })).data as MonthlyReport,
   });
 

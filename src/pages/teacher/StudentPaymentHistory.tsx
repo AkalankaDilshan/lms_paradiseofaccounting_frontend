@@ -26,6 +26,7 @@ export function StudentPaymentHistory() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['paymentHistory', studentId],
+    meta: { errorContext: 'load the payment history' },
     queryFn: async () => {
       const res = await apiClient.get(`/payments/${studentId}`);
       return res.data;
@@ -34,6 +35,7 @@ export function StudentPaymentHistory() {
   });
 
   const updatePayment = useMutation({
+    meta: { errorContext: 'update the payment', successMessage: 'Payment updated' },
     mutationFn: async ({ month, status, note }: { month: string; status: string; note?: string }) => {
       await apiClient.put(`/payments/${studentId}/${month}`, {
         status,

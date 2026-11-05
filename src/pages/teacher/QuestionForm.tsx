@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Plus, X, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
+import { notifyError } from '../../lib/feedback';
 
 interface OptionDraft {
   index: number;
@@ -36,6 +37,7 @@ export function QuestionForm() {
   // Load for edit
   useQuery({
     queryKey: ['questionDetail', questionId],
+    meta: { errorContext: 'load the question' },
     queryFn: async () => {
       const res = await apiClient.get('/questions');
       const all = res.data.items as any[];
@@ -61,6 +63,7 @@ export function QuestionForm() {
   const correctFilledIndex = filledOptions.findIndex(o => o.pos === correctIndex);
 
   const saveQuestion = useMutation({
+    meta: { errorContext: 'save the question', successMessage: 'Question saved' },
     mutationFn: async () => {
       const payload = {
         questionText,
@@ -77,7 +80,6 @@ export function QuestionForm() {
       }
     },
     onSuccess: () => navigate('/teacher/questions'),
-    onError: () => setError('Failed to save question.'),
   });
 
   const addOption = () => {
@@ -106,8 +108,8 @@ export function QuestionForm() {
       const put = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
       if (!put.ok) throw new Error('Upload to storage failed');
       setImageKey(key);
-    } catch {
-      setError('Image upload failed.');
+    } catch (err) {
+      notifyError(err, 'upload the image');
     } finally {
       setImageUploading(false);
     }

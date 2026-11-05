@@ -13,6 +13,7 @@ import { GroupBadge } from '../../components/GroupBadge';
 import { EmptyState, PageHeader, Skeleton, StatCard } from '../../components/common';
 import { downloadCsv } from '../../lib/csv';
 import { cn } from '../../lib/utils';
+import { confirm } from '../../lib/feedback';
 
 interface PaymentRecord {
   userId: string;
@@ -46,6 +47,7 @@ export function PaymentsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['payments'],
+    meta: { errorContext: 'load payments' },
     queryFn: async () => {
       const res = await apiClient.get('/payments');
       return res.data.items as PaymentRecord[];
@@ -53,6 +55,7 @@ export function PaymentsPage() {
   });
 
   const markPaid = useMutation({
+    meta: { errorContext: 'update the payments', successMessage: 'Payments marked as paid' },
     mutationFn: async (userIds: string[]) => {
       const currentMonth = new Date().toISOString().slice(0, 7);
       await Promise.all(userIds.map(id =>
@@ -144,7 +147,10 @@ export function PaymentsPage() {
         </div>
         {selected.size > 0 && (
           <Button className="h-9"
-            onClick={() => markPaid.mutate(Array.from(selected))}
+            onClick={async () => {
+              if (await confirm({ title: `Mark ${selected.size} student${selected.size === 1 ? '' : 's'} as paid?`, description: `Records this month’s fee as paid today for the selected students.`, tone: 'info', confirmLabel: 'Mark as paid' }))
+                markPaid.mutate(Array.from(selected));
+            }}
             disabled={markPaid.isPending}>
             <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
             Mark {selected.size} as Paid

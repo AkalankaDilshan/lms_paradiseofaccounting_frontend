@@ -52,6 +52,7 @@ export function QuizBuilder() {
   // Load all available questions
   const { data: questions = [] } = useQuery({
     queryKey: ['allQuestions'],
+    meta: { errorContext: 'load questions' },
     queryFn: async () => {
       const res = await apiClient.get('/questions');
       return res.data.items as Question[];
@@ -61,6 +62,7 @@ export function QuizBuilder() {
   // If edit mode, load existing quiz
   const { data: existingQuizzes } = useQuery({
     queryKey: ['teacherQuizzes'],
+    meta: { errorContext: 'load quizzes' },
     queryFn: async () => (await apiClient.get('/quizzes')).data as any[],
     enabled: isEdit,
   });
@@ -81,6 +83,7 @@ export function QuizBuilder() {
   }, [isEdit, existingQuizzes, editId]);
 
   const saveQuiz = useMutation({
+    meta: { errorContext: 'save the quiz', successMessage: 'Quiz saved' },
     mutationFn: async () => {
       const payload = {
         title,
@@ -102,7 +105,6 @@ export function QuizBuilder() {
       queryClient.invalidateQueries({ queryKey: ['teacherQuizzes'] });
       navigate('/teacher/quizzes');
     },
-    onError: () => setError('Failed to save quiz. Check all required fields.'),
   });
 
   const handleSubmit = () => {

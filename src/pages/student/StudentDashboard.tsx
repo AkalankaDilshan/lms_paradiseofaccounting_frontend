@@ -20,6 +20,7 @@ import {
 import { apiClient } from '../../api/client';
 import { percent, useAnnouncements, useMaterials, useStudentQuizzes, useTrend } from '../../api/queries';
 import { openMaterial } from '../../lib/materials';
+import { notifyError } from '../../lib/feedback';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -50,6 +51,7 @@ export function StudentDashboard() {
   const { data: materials } = useMaterials();
   const { data: profile } = useQuery({
     queryKey: ['studentProfile', user?.sub],
+    meta: { errorToast: false },
     queryFn: async () =>
       (await apiClient.get(`/admin/students/${user?.sub}`)).data as { firstName?: string; examYear?: number; center?: string; groups?: string[] },
     enabled: !!user?.sub,
@@ -324,7 +326,7 @@ export function StudentDashboard() {
                       <button
                         key={m.materialId}
                         type="button"
-                        onClick={() => openMaterial(m.materialId).catch(() => {})}
+                        onClick={() => openMaterial(m.materialId).catch((err) => notifyError(err, 'open the material'))}
                         className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                       >
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

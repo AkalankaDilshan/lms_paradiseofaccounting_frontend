@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import { CognitoUserSession } from 'amazon-cognito-identity-js';
 import { USE_MOCK, userPool } from '../lib/cognito';
+import { setSessionExpiredHandler } from '../lib/feedback';
 
 export { userPool };
 
@@ -138,6 +139,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIdToken(null);
   };
+
+  // The "session expired" dialog signs out through here; clearing the user
+  // lets ProtectedRoute send them to /login
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      userPool?.getCurrentUser()?.signOut();
+      setUser(null);
+      setIdToken(null);
+    });
+  }, []);
 
   const signInDemo = (role: DemoRole) => {
     applyDemoSession(role);

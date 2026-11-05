@@ -22,6 +22,7 @@ const RANK_TINT = ['bg-accent/10', 'bg-muted', 'bg-orange-500/5'];
 export function Leaderboard({ quizId, title, compact = false, className }: { quizId: string; title?: string; compact?: boolean; className?: string }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard', quizId],
+    meta: { errorToast: false },
     queryFn: async () => (await apiClient.get(`/analytics/quizzes/${quizId}/leaderboard`)).data.leaderboard as LeaderboardEntry[],
   });
 

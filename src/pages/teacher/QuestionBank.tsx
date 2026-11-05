@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Plus, Search, Edit, Archive, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
+import { confirm } from '../../lib/feedback';
 
 interface Question {
   questionId: string;
@@ -25,6 +26,7 @@ export function QuestionBank() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['questions', search],
+    meta: { errorContext: 'load the question bank' },
     queryFn: async () => {
       const params = search ? { tag: search } : undefined;
       const res = await apiClient.get('/questions', { params });
@@ -33,6 +35,7 @@ export function QuestionBank() {
   });
 
   const archiveQuestion = useMutation({
+    meta: { errorContext: 'archive the question', successMessage: 'Question archived' },
     mutationFn: async (questionId: string) => {
       await apiClient.delete(`/questions/${questionId}`);
     },
@@ -129,7 +132,10 @@ export function QuestionBank() {
                         </Button>
                         <Button
                           variant="ghost" size="icon"
-                          onClick={() => archiveQuestion.mutate(q.questionId)}
+                          onClick={async () => {
+                            if (await confirm({ title: 'Archive this question?', description: 'It won’t be offered for new quizzes. Quizzes that already use it, and past results, are unaffected.', tone: 'warning', confirmLabel: 'Archive question' }))
+                              archiveQuestion.mutate(q.questionId);
+                          }}
                           disabled={archiveQuestion.isPending}
                           title="Archive"
                         >

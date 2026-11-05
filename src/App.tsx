@@ -30,12 +30,44 @@ import { AttendancePage } from './pages/teacher/AttendancePage';
 import { MaterialsPage as TeacherMaterialsPage } from './pages/teacher/MaterialsPage';
 import { AnnouncementsPage as TeacherAnnouncementsPage } from './pages/teacher/AnnouncementsPage';
 import { MessagesPage as TeacherMessagesPage } from './pages/teacher/MessagesPage';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
+import { FeedbackHost } from './components/feedback/FeedbackHost';
+import { notifyError, toast } from './lib/feedback';
 import { Provider as JotaiProvider } from 'jotai';
 import type { ReactNode } from 'react';
 
+/**
+ * Every failed request reports itself (toast, or a blocking dialog for
+ * critical errors) unless it opts out with meta.errorToast = false — used where
+ * the page already shows the error inline. meta.errorContext names the action
+ * ("load quizzes"), meta.successMessage adds a success toast to a mutation.
+ */
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // A 4xx won't fix itself — fail fast instead of retrying three times
+      retry: (count, err) => !(isAxiosError(err) && err.response && err.response.status < 500) && count < 2,
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (err, query) => {
+      if (query.meta?.errorToast === false) return;
+      // A background refresh failing while good data is on screen isn't worth an interruption
+      if (query.state.data !== undefined && !(isAxiosError(err) && err.response?.status === 401)) return;
+      notifyError(err, query.meta?.errorContext ?? 'load this page’s data');
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (err, _vars, _ctx, mutation) => {
+      if (mutation.meta?.errorToast === false) return;
+      notifyError(err, mutation.meta?.errorContext ?? 'save your changes');
+    },
+    onSuccess: (_data, _vars, _ctx, mutation) => {
+      if (mutation.meta?.successMessage) toast.success(mutation.meta.successMessage, mutation.meta.successDetail);
+    },
+  }),
 });
 
 function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles: string[] }) {
@@ -135,6 +167,7 @@ function App() {
             <Router>
               <AppRoutes />
             </Router>
+            <FeedbackHost />
           </AuthProvider>
         </QueryClientProvider>
       </JotaiProvider>

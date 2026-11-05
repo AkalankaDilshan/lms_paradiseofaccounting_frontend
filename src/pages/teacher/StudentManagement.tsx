@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { apiClient } from '../../api/client';
 import { Avatar } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
@@ -15,6 +16,7 @@ import { EmptyState, PageHeader, Skeleton } from '../../components/common';
 import { useAuth } from '../../contexts/AuthContext';
 import { downloadCsv } from '../../lib/csv';
 import { cn } from '../../lib/utils';
+import { confirm, notifyError, showAlert } from '../../lib/feedback';
 
 const GROUPS = [
   '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -70,11 +72,12 @@ export function StudentManagement() {
   // Add student form state
   const [addForm, setAddForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
-    school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '', password: '',
+    school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '',
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['students'],
+    meta: { errorContext: 'load the student list' },
     queryFn: async () => {
       const res = await apiClient.get('/admin/students');
       return res.data.items as Student[];
@@ -82,6 +85,7 @@ export function StudentManagement() {
   });
 
   const addStudent = useMutation({
+    meta: { errorToast: false, successMessage: 'Student added', successDetail: 'They’ll receive an email with a temporary password.' },
     mutationFn: async () => {
       await apiClient.post('/admin/students', {
         ...addForm,
@@ -91,11 +95,35 @@ export function StudentManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       setShowAddModal(false);
-      setAddForm({ firstName: '', lastName: '', email: '', phone: '', school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '', password: '' });
+      setAddForm({ firstName: '', lastName: '', email: '', phone: '', school: '', examYear: EXAM_YEARS[0], center: CLASS_CENTERS[0].value, address: '' });
+    },
+    // A taken email gets its own warning dialog with a way to find that person;
+    // everything else goes through the standard error feedback
+    onError: (err) => {
+      if (isAxiosError(err) && err.response?.status === 409) {
+        const email = addForm.email.trim();
+        showAlert({
+          tone: 'warning',
+          title: 'This email is already registered',
+          message: `${email} already has an account, so a new student can't be created with it. They may have signed up themselves and be waiting for approval, or already be in your student list. Use a different email, or open the existing student.`,
+          primary: {
+            label: 'Show existing student',
+            onClick: () => {
+              setShowAddModal(false);
+              addStudent.reset();
+              setStatusFilter('all');
+              setSearch(email);
+            },
+          },
+        });
+        return;
+      }
+      notifyError(err, 'add the student');
     },
   });
 
   const suspendStudent = useMutation({
+    meta: { errorContext: 'suspend the student', successMessage: 'Student suspended' },
     mutationFn: async (userId: string) => {
       await apiClient.delete(`/admin/students/${userId}`);
     },
@@ -104,6 +132,7 @@ export function StudentManagement() {
 
   // Undo a suspension — re-enables the Cognito user (SuperAdmin only)
   const reactivateStudent = useMutation({
+    meta: { errorContext: 'reactivate the student', successMessage: 'Student reactivated' },
     mutationFn: async (userId: string) => {
       await apiClient.post(`/admin/students/${userId}/reactivate`);
     },
@@ -114,6 +143,7 @@ export function StudentManagement() {
   // group (see post_confirmation.py) — approving adds the group and flips
   // them to active so their next session refresh unlocks full access.
   const approveStudent = useMutation({
+    meta: { errorContext: 'approve the student', successMessage: 'Student approved', successDetail: 'They get full access the next time they sign in.' },
     mutationFn: async (userId: string) => {
       await apiClient.post(`/admin/students/${userId}/approve`);
     },
@@ -121,6 +151,7 @@ export function StudentManagement() {
   });
 
   const addGroupMutation = useMutation({
+    meta: { errorContext: 'add the group', successMessage: 'Group added' },
     mutationFn: async ({ userId, group }: { userId: string; group: string }) => {
       await apiClient.post(`/admin/students/${userId}/groups`, { groupId: group });
     },
@@ -128,6 +159,7 @@ export function StudentManagement() {
   });
 
   const removeGroupMutation = useMutation({
+    meta: { errorContext: 'remove the group', successMessage: 'Group removed' },
     mutationFn: async ({ userId, group }: { userId: string; group: string }) => {
       await apiClient.delete(`/admin/students/${userId}/groups/${group}`);
     },
@@ -138,6 +170,7 @@ export function StudentManagement() {
   // row is two Cognito calls, and a request must finish within 30 s), so
   // larger files go up in batches that repeat the header row.
   const importCsv = useMutation({
+    meta: { errorContext: 'import the CSV' },
     mutationFn: async (file: File): Promise<CsvImportResult> => {
       const lines = (await file.text()).replace(/^\uFEFF/, '').split(/\r?\n/);
       const header = lines[0] ?? '';
@@ -183,8 +216,12 @@ export function StudentManagement() {
       filtered.map(s => [s.firstName, s.lastName, s.email, s.phone, s.school, s.examYear || '', s.center, s.groups.join(' '), s.status]),
     );
 
-  const confirmSuspend = (student: Student) => {
-    if (window.confirm(`Suspend ${student.firstName} ${student.lastName}? They'll be signed out and can't start quizzes or download materials until reactivated.`)) {
+  const confirmSuspend = async (student: Student) => {
+    if (await confirm({
+      title: `Suspend ${student.firstName} ${student.lastName}?`,
+      description: 'They’ll be signed out everywhere and can’t start quizzes or download materials until a SuperAdmin reactivates them. Their results are kept.',
+      confirmLabel: 'Suspend student',
+    })) {
       suspendStudent.mutate(student.userId);
     }
   };
@@ -367,7 +404,7 @@ export function StudentManagement() {
             <Card>
               <CardHeader className="border-b border-border flex flex-row items-center justify-between">
                 <CardTitle>Add New Student</CardTitle>
-                <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
+                <button onClick={() => { setShowAddModal(false); addStudent.reset(); }} className="text-muted-foreground hover:text-foreground">
                   <X className="w-5 h-5" />
                 </button>
               </CardHeader>
@@ -387,7 +424,6 @@ export function StudentManagement() {
                 </div>
                 {[
                   { id: 'email', label: 'Email', type: 'email' },
-                  { id: 'password', label: 'Temporary Password', type: 'password' },
                   { id: 'phone', label: 'Phone' },
                   { id: 'school', label: 'School' },
                 ].map(f => (
@@ -422,11 +458,14 @@ export function StudentManagement() {
                     onChange={e => setAddForm(prev => ({ ...prev, address: e.target.value }))}
                     className="h-10" />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Cognito emails the student a temporary password; they set their own at first sign-in.
+                </p>
                 <div className="flex gap-3 pt-2">
                   <Button onClick={() => addStudent.mutate()} disabled={addStudent.isPending} className="flex-1">
                     {addStudent.isPending ? 'Adding...' : 'Add Student'}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => { setShowAddModal(false); addStudent.reset(); }}>Cancel</Button>
                 </div>
               </CardContent>
             </Card>
@@ -461,7 +500,11 @@ export function StudentManagement() {
                     <GroupBadge group={g} />
                     {inGroup ? (
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
-                        onClick={() => removeGroupMutation.mutate({ userId: showGroupPanel.userId, group: g })}>
+                        onClick={async () => {
+                          const student = showGroupPanel;
+                          if (await confirm({ title: `Remove ${student.firstName} from ${g}?`, description: 'They’ll stop seeing quizzes, announcements and materials for this group.', tone: 'warning', confirmLabel: 'Remove from group' }))
+                            removeGroupMutation.mutate({ userId: student.userId, group: g });
+                        }}>
                         <X className="w-3.5 h-3.5" />
                       </Button>
                     ) : (

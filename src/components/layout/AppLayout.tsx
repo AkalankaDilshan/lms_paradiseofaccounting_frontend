@@ -32,6 +32,7 @@ import { Button, buttonVariants } from '../ui/button';
 import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { NotificationBell } from './NotificationBell';
+import { ErrorBoundary } from '../feedback/ErrorBoundary';
 import { cn } from '../../lib/utils';
 
 interface NavItem {
@@ -411,7 +412,9 @@ export function AppLayout() {
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6"
           >
-            <Outlet />
+            <ErrorBoundary resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </motion.div>
         </main>
       </div>

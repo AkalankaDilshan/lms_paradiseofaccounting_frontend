@@ -52,6 +52,7 @@ function Header({ subtitle }: { subtitle: string }) {
 function QuizPicker() {
   const { data, isLoading } = useQuery({
     queryKey: ['teacherQuizzes'],
+    meta: { errorContext: 'load quizzes' },
     queryFn: async () => (await apiClient.get('/quizzes')).data as QuizSummary[],
   });
   const quizzes = [...(data ?? [])].sort((a, b) => b.openAt.localeCompare(a.openAt));
@@ -84,6 +85,7 @@ function QuizPicker() {
 function QuizStatsView({ quizId }: { quizId: string }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['quizStats', quizId],
+    meta: { errorContext: 'load quiz analytics' },
     queryFn: async () => (await apiClient.get(`/analytics/quizzes/${quizId}`)).data as QuizStats,
   });
 

@@ -111,6 +111,7 @@ export const percent = (score: number, max: number) => (max ? Math.round((score 
 export function useStudentQuizzes(enabled = true) {
   return useQuery({
     queryKey: ['studentQuizzes'],
+    meta: { errorContext: 'load your quizzes' },
     queryFn: async () => ((await apiClient.get('/quizzes')).data ?? []) as StudentQuiz[],
     enabled,
   });
@@ -119,6 +120,7 @@ export function useStudentQuizzes(enabled = true) {
 export function useAnnouncements(enabled = true) {
   return useQuery({
     queryKey: ['announcements'],
+    meta: { errorContext: 'load announcements' },
     queryFn: async () => ((await apiClient.get('/announcements')).data.items ?? []) as Announcement[],
     enabled,
   });
@@ -127,6 +129,7 @@ export function useAnnouncements(enabled = true) {
 export function useMaterials(enabled = true) {
   return useQuery({
     queryKey: ['materials'],
+    meta: { errorContext: 'load study materials' },
     queryFn: async () => ((await apiClient.get('/materials')).data.items ?? []) as Material[],
     enabled,
   });
@@ -135,6 +138,7 @@ export function useMaterials(enabled = true) {
 export function useTrend(userId: string | undefined) {
   return useQuery({
     queryKey: ['trend', userId],
+    meta: { errorContext: 'load your results' },
     queryFn: async () => {
       const items = ((await apiClient.get(`/analytics/students/${userId}/trend`)).data.items ?? []) as TrendItem[];
       return [...items].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
@@ -146,6 +150,7 @@ export function useTrend(userId: string | undefined) {
 export function useOverview(enabled = true) {
   return useQuery({
     queryKey: ['overview'],
+    meta: { errorContext: 'load the class overview' },
     queryFn: async () => (await apiClient.get('/analytics/overview')).data as Overview,
     enabled,
   });
@@ -154,6 +159,7 @@ export function useOverview(enabled = true) {
 export function useStudents(enabled = true) {
   return useQuery({
     queryKey: ['students'],
+    meta: { errorContext: 'load the student list' },
     queryFn: async () => ((await apiClient.get('/admin/students')).data.items ?? []) as StaffUser[],
     enabled,
   });
@@ -162,6 +168,7 @@ export function useStudents(enabled = true) {
 export function usePayments(enabled = true) {
   return useQuery({
     queryKey: ['payments'],
+    meta: { errorContext: 'load payments' },
     queryFn: async () => ((await apiClient.get('/payments')).data.items ?? []) as PaymentRow[],
     enabled,
   });
@@ -170,6 +177,7 @@ export function usePayments(enabled = true) {
 export function useTeachingAssistants(enabled = true) {
   return useQuery({
     queryKey: ['tas'],
+    meta: { errorContext: 'load the teaching team' },
     queryFn: async () => ((await apiClient.get('/admin/tas')).data.items ?? []) as StaffUser[],
     enabled,
   });
@@ -192,6 +200,7 @@ export interface TeacherQuiz {
 export function useTeacherQuizzes(enabled = true) {
   return useQuery({
     queryKey: ['teacherQuizzes'],
+    meta: { errorContext: 'load quizzes' },
     queryFn: async () => ((await apiClient.get('/quizzes')).data ?? []) as TeacherQuiz[],
     enabled,
   });

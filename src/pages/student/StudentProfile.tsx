@@ -47,6 +47,7 @@ export function StudentProfile() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['studentProfile', user?.sub],
+    meta: { errorToast: false },
     queryFn: async () => {
       const res = await apiClient.get(`/admin/students/${user?.sub}`);
       return res.data as StudentProfile;
@@ -63,6 +64,7 @@ export function StudentProfile() {
   }, [data?.phone, data?.address]);
 
   const updateProfile = useMutation({
+    meta: { errorContext: 'update your profile', successMessage: 'Profile updated' },
     mutationFn: async () => {
       await apiClient.put(`/admin/students/${user?.sub}`, formData);
     },

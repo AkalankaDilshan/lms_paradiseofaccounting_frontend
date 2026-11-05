@@ -235,3 +235,12 @@
     transform: none;
   }
 }
+
+/* Toast auto-dismiss countdown (paused on hover via animation-play-state) */
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+.toast-progress {
+  animation: toast-progress linear forwards;
+}

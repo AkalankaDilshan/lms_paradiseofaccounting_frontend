@@ -116,6 +116,7 @@ export function QuizAttempt() {
   // 1. Fetch Attempt (Start Quiz) — resume a persisted in-progress attempt when one exists
   const { data, isLoading, error } = useQuery({
     queryKey: ['attempt', quizId],
+    meta: { errorToast: false },
     queryFn: async () => {
       const persisted = readPersistedAttempt(quizId);
 
@@ -209,6 +210,7 @@ export function QuizAttempt() {
 
   // Submit Mutation — answers are { [questionId]: selectedOptionIndex }
   const submitAttempt = useMutation({
+    meta: { errorToast: false },
     mutationFn: async () => {
       const payload = {
         answersGiven: answers,

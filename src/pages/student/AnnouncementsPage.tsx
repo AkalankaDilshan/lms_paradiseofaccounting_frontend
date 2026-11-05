@@ -9,6 +9,7 @@ import { Megaphone, Pin, X, Plus, Edit2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { GroupBadge } from '../../components/GroupBadge';
 import { groupToggleClasses } from '../../lib/groupColors';
+import { confirm } from '../../lib/feedback';
 
 const GROUPS = [
   'ALL', '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -53,6 +54,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['announcements'],
+    meta: { errorContext: 'load announcements' },
     queryFn: async () => {
       const res = await apiClient.get('/announcements');
       return (res.data.items as Announcement[]).sort((a, b) => {
@@ -64,6 +66,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
   });
 
   const createAnn = useMutation({
+    meta: { errorContext: 'save the announcement', successMessage: 'Announcement saved' },
     mutationFn: async () => {
       if (editItem) {
         await apiClient.put(`/announcements/${editItem.announcementId}`, {
@@ -82,6 +85,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
   });
 
   const deleteAnn = useMutation({
+    meta: { errorContext: 'delete the announcement', successMessage: 'Announcement deleted' },
     mutationFn: async (id: string) => {
       await apiClient.delete(`/announcements/${id}`);
     },
@@ -187,7 +191,10 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(ann)}>
                         <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteAnn.mutate(ann.announcementId)}>
+                      <Button variant="ghost" size="icon" onClick={async () => {
+                        if (await confirm({ title: `Delete “${ann.title}”?`, description: 'It will disappear from every student’s announcements. This can’t be undone.', confirmLabel: 'Delete' }))
+                          deleteAnn.mutate(ann.announcementId);
+                      }}>
                         <X className="w-3.5 h-3.5 text-destructive" />
                       </Button>
                     </div>
