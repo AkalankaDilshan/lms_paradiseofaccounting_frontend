@@ -7,26 +7,46 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   // ============================================================
   // 1. Quizzes List — Backend returns raw array (not { items: [] })
   // ============================================================
+  const day = 86400000;
+  const iso = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+  // One list serves both roles in demo mode: staff screens ignore the
+  // student-only fields (state, attemptsUsed, bestScore…)
   mock.onGet('/quizzes').reply(200, [
     {
       quizId: 'quiz-1',
       title: 'ගිණුම්කරණ මූලධර්ම — Paper 1', // Accounting Principles Paper 1
       allowedGroups: ['2027-HATTON', '2027-GINIGATHHENA'],
-      openAt: new Date().toISOString(),
-      closeAt: new Date(Date.now() + 86400000).toISOString(),
-      durationMinutes: 30,
-      maxAttempts: 3,
-      archived: false,
+      questionIds: ['ques_1', 'ques_2', 'ques_3'],
+      openAt: iso(-day), closeAt: iso(day), durationMinutes: 30, maxAttempts: 3, archived: false,
+      answersVisibility: 'immediate', questionCount: 3, state: 'open',
+      attemptsUsed: 0, hasOpenAttempt: false, bestScore: null, bestMaxScore: null, lastAttemptId: null,
     },
     {
       quizId: 'quiz-2',
       title: 'උසස් ලෙජර් ඇතුළත් කිරීම් — Paper 2', // Advanced Ledger Entries
-      allowedGroups: ['2028-HATTON'],
-      openAt: new Date().toISOString(),
-      closeAt: new Date(Date.now() + 86400000 * 2).toISOString(),
-      durationMinutes: 45,
-      maxAttempts: 1,
-      archived: false,
+      allowedGroups: ['2027-HATTON'],
+      questionIds: ['ques_1', 'ques_2'],
+      openAt: iso(-2 * 3600000), closeAt: iso(10 * 3600000), durationMinutes: 45, maxAttempts: 2, archived: false,
+      answersVisibility: 'afterClose', questionCount: 2, state: 'open',
+      attemptsUsed: 1, hasOpenAttempt: true, bestScore: null, bestMaxScore: null, lastAttemptId: null,
+    },
+    {
+      quizId: 'quiz-3',
+      title: 'ක්ෂය කිරීම් — Revision Paper',
+      allowedGroups: ['2027-HATTON'],
+      questionIds: ['ques_1', 'ques_2', 'ques_3'],
+      openAt: iso(3 * day), closeAt: iso(4 * day), durationMinutes: 60, maxAttempts: 1, archived: false,
+      answersVisibility: 'immediate', questionCount: 3, state: 'upcoming',
+      attemptsUsed: 0, hasOpenAttempt: false, bestScore: null, bestMaxScore: null, lastAttemptId: null,
+    },
+    {
+      quizId: 'quiz-4',
+      title: 'හවුල් ව්‍යාපාර — Paper 1',
+      allowedGroups: ['2027-HATTON'],
+      questionIds: ['ques_1', 'ques_2', 'ques_3'],
+      openAt: iso(-10 * day), closeAt: iso(-8 * day), durationMinutes: 30, maxAttempts: 2, archived: false,
+      answersVisibility: 'immediate', questionCount: 3, state: 'closed',
+      attemptsUsed: 1, hasOpenAttempt: false, bestScore: 2, bestMaxScore: 3, lastAttemptId: 'att_123',
     },
   ]);
 
@@ -82,9 +102,13 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   // ============================================================
   mock.onGet(/\/quizzes\/[^/]+\/attempts\/[^/]+\/results/).reply(200, {
     attemptId: 'att_123',
+    quizTitle: 'හවුල් ව්‍යාපාර — Paper 1',
     score: 2,
     maxScore: 3,
-    percentage: 67,
+    percentage: 66.7,
+    submittedAt: new Date(Date.now() - 9 * day).toISOString(),
+    answersReleased: true,
+    answersReleaseAt: null,
     results: [
       {
         questionId: 'ques_1',
@@ -161,9 +185,12 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   // ============================================================
   mock.onGet(/\/analytics\/students\/[^/]+\/trend/).reply(200, {
     items: [
-      { quizId: 'quiz-1', quizTitle: 'ගිණුම්කරණ Paper 1', score: 60, maxScore: 100, submittedAt: '2026-09-10T10:00:00Z' },
-      { quizId: 'quiz-2', quizTitle: 'ගිණුම්කරණ Paper 2', score: 85, maxScore: 100, submittedAt: '2026-09-12T10:00:00Z' },
-      { quizId: 'quiz-3', quizTitle: 'ගිණුම්කරණ Paper 3', score: 100, maxScore: 100, submittedAt: '2026-09-14T10:00:00Z' },
+      { attemptId: 'att_101', quizId: 'quiz-4', quizTitle: 'ගිණුම්කරණ Paper 1', score: 12, maxScore: 20, percentage: 60, submittedAt: '2026-08-20T10:00:00Z' },
+      { attemptId: 'att_102', quizId: 'quiz-4', quizTitle: 'ගිණුම්කරණ Paper 2', score: 13, maxScore: 20, percentage: 65, submittedAt: '2026-08-30T10:00:00Z' },
+      { attemptId: 'att_103', quizId: 'quiz-4', quizTitle: 'ගිණුම්කරණ Paper 3', score: 14, maxScore: 20, percentage: 70, submittedAt: '2026-09-05T10:00:00Z' },
+      { attemptId: 'att_104', quizId: 'quiz-4', quizTitle: 'ගිණුම්කරණ Paper 4', score: 17, maxScore: 20, percentage: 85, submittedAt: '2026-09-10T10:00:00Z' },
+      { attemptId: 'att_105', quizId: 'quiz-4', quizTitle: 'ගිණුම්කරණ Paper 5', score: 16, maxScore: 20, percentage: 80, submittedAt: '2026-09-12T10:00:00Z' },
+      { attemptId: 'att_123', quizId: 'quiz-4', quizTitle: 'හවුල් ව්‍යාපාර — Paper 1', score: 19, maxScore: 20, percentage: 95, submittedAt: '2026-09-14T10:00:00Z' },
     ]
   });
 
@@ -435,18 +462,24 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   // ============================================================
   // 12. Attendance
   // ============================================================
-  mock.onGet(/\/attendance/).reply(200, {
+  // The report route first — /\/attendance/ would otherwise swallow it
+  mock.onGet('/attendance/report').reply(200, {
+    groupId: '2027-HATTON',
+    month: '2026-09',
+    dates: ['2026-09-02', '2026-09-09', '2026-09-16', '2026-09-23'],
+    students: [
+      { userId: 'u1', firstName: 'Kasun', lastName: 'Perera', present: 4, absent: 0, percentage: 100,
+        days: { '2026-09-02': 'present', '2026-09-09': 'present', '2026-09-16': 'present', '2026-09-23': 'present' } },
+      { userId: 'u2', firstName: 'Nimal', lastName: 'Silva', present: 2, absent: 2, percentage: 50,
+        days: { '2026-09-02': 'present', '2026-09-09': 'absent', '2026-09-16': 'present', '2026-09-23': 'absent' } },
+    ],
+  });
+  mock.onGet('/attendance').reply(200, {
     date: '2026-09-16',
     groupId: '2027-HATTON',
     records: { 'u1': 'present', 'u2': 'absent', 'u3': 'present' }
   });
   mock.onPost('/attendance').reply(201, { saved: true });
-  mock.onGet(/\/attendance\/reports/).reply(200, {
-    items: [
-      { userId: 'u1', firstName: 'Kasun', lastName: 'Perera', attendancePercentage: 92 },
-      { userId: 'u2', firstName: 'Nimal', lastName: 'Silva', attendancePercentage: 78 },
-    ]
-  });
 
   // ============================================================
   // 13. Messages / Inbox
@@ -472,6 +505,35 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
     ]
   });
   mock.onPost('/messages').reply(201, { messageId: 'msg-new', success: true });
+
+  // ============================================================
+  // 14. Staff overview + teaching team
+  // ============================================================
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 11 + i, 1);
+    return d.toISOString().slice(0, 7);
+  });
+  mock.onGet('/analytics/overview').reply(200, {
+    students: { total: 58, active: 52, pending: 3, suspended: 3 },
+    quizzes: { total: 24, open: 2, upcoming: 1 },
+    attempts: { total: 612, last30Days: 96, studentsActiveLast30Days: 44, averagePercentage: 68.4, averagePercentageLast30Days: 72.1 },
+    monthly: months.map((month, i) => ({ month, attempts: [12, 18, 25, 31, 22, 40, 46, 52, 61, 70, 84, 96][i], averagePercentage: [58, 61, 60, 63, 65, 64, 67, 69, 70, 71, 70, 72][i] })),
+    recentAttempts: [
+      { attemptId: 'r1', quizId: 'quiz-1', quizTitle: 'ගිණුම්කරණ මූලධර්ම — Paper 1', userId: 'u1', studentName: 'Kasun Perera', score: 18, maxScore: 20, percentage: 90, submittedAt: iso(-20 * 60000) },
+      { attemptId: 'r2', quizId: 'quiz-1', quizTitle: 'ගිණුම්කරණ මූලධර්ම — Paper 1', userId: 'u2', studentName: 'Nimal Silva', score: 11, maxScore: 20, percentage: 55, submittedAt: iso(-65 * 60000) },
+      { attemptId: 'r3', quizId: 'quiz-2', quizTitle: 'උසස් ලෙජර් ඇතුළත් කිරීම් — Paper 2', userId: 'u3', studentName: 'Sanduni Fernando', score: 7, maxScore: 20, percentage: 35, submittedAt: iso(-3 * 3600000) },
+    ],
+  });
+  mock.onGet('/admin/tas').reply(200, {
+    items: [
+      { userId: 'ta1', firstName: 'Tharindu', lastName: 'Jayasinghe', email: 'tharindu@paradiseofaccounting.lk', phone: '+94771112223', role: 'TA', status: 'active', createdAt: '2026-01-10T08:00:00Z' },
+      { userId: 'ta2', firstName: 'Ishara', lastName: 'Wickramasinghe', email: 'ishara@paradiseofaccounting.lk', phone: '', role: 'TA', status: 'suspended', createdAt: '2026-03-02T08:00:00Z' },
+    ],
+  });
+  mock.onPost('/admin/tas').reply(201, { userId: 'ta-new' });
+  mock.onDelete(/\/admin\/tas\/[^/]+/).reply(200, { suspended: true });
+  mock.onPost(/\/admin\/(tas|students)\/[^/]+\/reactivate/).reply(200, { reactivated: true, status: 'active' });
 
   // Allow unmocked requests to pass through
   mock.onAny().passThrough();

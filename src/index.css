@@ -147,3 +147,91 @@
   animation: float 8s ease-in-out infinite;
 }
 
+
+/* ── Motion & surface polish ─────────────────────────────────────────────── */
+
+@layer base {
+  body {
+    /* A faint brand glow at the top of every page; flat everywhere else */
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      hsl(var(--primary) / 0.08),
+      transparent 70%
+    );
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.5); }
+  100% { box-shadow: 0 0 0 6px hsl(var(--success) / 0); }
+}
+
+/* Children fade up one after another — for lists and card grids */
+.stagger > * {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(n + 8) { animation-delay: 280ms; }
+
+/* Cards that lead somewhere lift slightly on hover */
+.interactive {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s, background-color 0.2s;
+}
+.interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -12px hsl(var(--foreground) / 0.25);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  border-radius: var(--radius);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.06), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+.live-dot {
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > *,
+  .skeleton::after,
+  .live-dot,
+  .animate-float {
+    animation: none !important;
+  }
+  .interactive:hover {
+    transform: none;
+  }
+}

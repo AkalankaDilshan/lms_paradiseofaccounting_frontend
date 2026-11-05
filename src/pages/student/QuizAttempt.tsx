@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { apiClient } from '../../api/client';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -94,6 +94,7 @@ function clearPersistedAttempt(quizId: string | undefined) {
 export function QuizAttempt() {
   const { id: quizId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   // answers: key=questionId, value=selectedOptionIndex
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -143,6 +144,8 @@ export function QuizAttempt() {
       return fresh;
     },
     refetchOnWindowFocus: false,
+    // 4xx (closed, max attempts, suspended) won't change on retry
+    retry: (count, err) => !(isAxiosError(err) && err.response && err.response.status < 500) && count < 2,
   });
 
   // Hydrate local state from the resumed/started attempt exactly once per attemptId
@@ -214,6 +217,8 @@ export function QuizAttempt() {
     },
     onSuccess: () => {
       clearPersistedAttempt(quizId);
+      queryClient.invalidateQueries({ queryKey: ['studentQuizzes'] });
+      queryClient.invalidateQueries({ queryKey: ['trend'] });
       navigate(`/student/quizzes/${quizId}/results/${data?.attemptId}`);
     },
     // 409 = the server has closed this attempt (expired or already submitted);
@@ -233,11 +238,23 @@ export function QuizAttempt() {
   if (isLoading) return (
     <div className="space-y-4">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-36 rounded-xl bg-white/5 animate-pulse" />
+        <div key={i} className="skeleton h-36" />
       ))}
     </div>
   );
-  if (error || !data) return <div className="p-8 text-center text-destructive">Failed to start quiz. Max attempts reached or quiz closed.</div>;
+  if (error || !data) {
+    const reason = isAxiosError(error) && error.response?.data?.error;
+    return (
+      <div className="mx-auto max-w-md space-y-4 p-8 text-center">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+          <AlertCircle className="size-5" />
+        </div>
+        <p className="font-medium">{reason || "This quiz couldn't be started."}</p>
+        <p className="text-sm text-muted-foreground">If you think this is a mistake, contact the class office.</p>
+        <Button variant="outline" onClick={() => navigate('/student/quizzes')}>Back to my quizzes</Button>
+      </div>
+    );
+  }
   if (submitClosed) {
     const message = isAxiosError(submitAttempt.error) && submitAttempt.error.response?.data?.error;
     return (
@@ -447,7 +464,7 @@ export function QuizAttempt() {
             <CardContent>
               {question.imageKey && (
                 <img src={question.imageKey} alt="" loading="lazy"
-                  className="mb-4 max-h-80 w-full rounded-md border border-white/10 object-contain" />
+                  className="mb-4 max-h-80 w-full rounded-md border border-border object-contain" />
               )}
               <RadioGroup
                 value={answers[question.questionId] !== undefined ? String(answers[question.questionId]) : ''}

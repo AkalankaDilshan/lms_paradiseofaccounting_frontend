@@ -54,7 +54,7 @@ export function TodoWidget() {
 
   return (
     <Card>
-      <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between">
+      <CardHeader className="border-b border-border flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center gap-2">
           <CheckSquare className="w-4 h-4 text-primary" />
           To-Do
@@ -113,7 +113,7 @@ export function TodoWidget() {
               <div className="mt-2 space-y-1">
                 {done.map(todo => (
                   <div key={todo.id} className="group flex items-center gap-2 p-2 rounded-lg">
-                    <span className="w-2 h-2 rounded-full bg-white/20 shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" />
                     <button className="shrink-0" onClick={() => toggle(todo.id)}>
                       <CheckSquare className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -130,7 +130,7 @@ export function TodoWidget() {
         )}
 
         {/* Add item */}
-        <div className="pt-2 border-t border-white/10 space-y-2">
+        <div className="pt-2 border-t border-border space-y-2">
           <div className="flex gap-2">
             <Input
               placeholder="New task..."

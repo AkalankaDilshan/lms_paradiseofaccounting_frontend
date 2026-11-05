@@ -73,7 +73,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
 
   if (isLoading) return (
     <div className="space-y-4">
-      {[...Array(3)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />)}
+      {[...Array(3)].map((_, i) => <div key={i} className="h-20 skeleton" />)}
     </div>
   );
 
@@ -82,9 +82,9 @@ export function MessagesPage({ role }: MessagesPageProps) {
       className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
-          <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Messages</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {isTeacher ? 'Broadcast messages to your students.' : 'Messages from your teacher.'}
           </p>
         </div>
@@ -98,7 +98,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-6">
         {/* Message list */}
         <Card>
-          <CardHeader className="border-b border-white/10">
+          <CardHeader className="border-b border-border">
             <CardTitle className="text-base">Inbox</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -108,7 +108,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
                 <p className="text-sm">No messages yet.</p>
               </div>
             ) : (
-              <div className="divide-y divide-white/10">
+              <div className="stagger divide-y divide-border">
                 {(data ?? []).map(msg => (
                   <button key={msg.messageId}
                     onClick={() => setSelected(msg)}
@@ -160,7 +160,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
             <Card>
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center justify-between p-5 border-b border-border">
                 <h3 className="font-semibold text-lg">New Message</h3>
                 <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
               </div>

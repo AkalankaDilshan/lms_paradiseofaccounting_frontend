@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { CalendarClock, FileQuestion, Users, ChevronUp, ChevronDown, X, Search } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '../../lib/utils';
 
 const GROUPS = [
   '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -43,6 +44,7 @@ export function QuizBuilder() {
   const [openAt, setOpenAt] = useState('');
   const [closeAt, setCloseAt] = useState('');
   const [allowedGroups, setAllowedGroups] = useState<string[]>([]);
+  const [answersVisibility, setAnswersVisibility] = useState<'immediate' | 'afterClose'>('immediate');
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [questionSearch, setQuestionSearch] = useState('');
   const [error, setError] = useState('');
@@ -73,6 +75,7 @@ export function QuizBuilder() {
         setCloseAt(toLocalInputValue(q.closeAt));
         setAllowedGroups(q.allowedGroups || []);
         setSelectedQuestions(q.questionIds || []);
+        setAnswersVisibility(q.answersVisibility === 'afterClose' ? 'afterClose' : 'immediate');
       }
     }
   }, [isEdit, existingQuizzes, editId]);
@@ -87,6 +90,7 @@ export function QuizBuilder() {
         closeAt: new Date(closeAt).toISOString(),
         allowedGroups,
         questionIds: selectedQuestions,
+        answersVisibility,
       };
       if (isEdit) {
         await apiClient.put(`/quizzes/${editId}`, payload);
@@ -143,9 +147,9 @@ export function QuizBuilder() {
       className="space-y-6"
     >
       <div>
-        <p className="text-sm font-medium text-primary">Content Studio</p>
-        <h1 className="text-3xl font-bold tracking-tight">{isEdit ? 'Edit Quiz' : 'New Quiz'}</h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Content Studio</p>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{isEdit ? 'Edit Quiz' : 'New Quiz'}</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {isEdit ? 'Update quiz details and question selection.' : 'Create an assessment and assign it to the right groups.'}
         </p>
       </div>
@@ -154,7 +158,7 @@ export function QuizBuilder() {
         {/* Main form */}
         <div className="space-y-6">
           <Card>
-            <CardHeader className="border-b border-white/10">
+            <CardHeader className="border-b border-border">
               <CardTitle>Quiz Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 p-6">
@@ -189,12 +193,37 @@ export function QuizBuilder() {
                 </div>
                 <p className="text-xs text-muted-foreground">Students can access this quiz only within this window.</p>
               </div>
+              <div className="space-y-2">
+                <Label>Show correct answers</Label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {([
+                    { value: 'immediate', title: 'Right after submitting', hint: 'Students review answers and explanations straight away.' },
+                    { value: 'afterClose', title: 'After the quiz closes', hint: 'Score shows at once; answers unlock at the close time so they can’t be shared.' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setAnswersVisibility(opt.value)}
+                      aria-pressed={answersVisibility === opt.value}
+                      className={cn(
+                        'rounded-lg border p-3 text-left transition-all',
+                        answersVisibility === opt.value
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                          : 'border-border hover:bg-muted/40',
+                      )}
+                    >
+                      <p className="text-sm font-medium">{opt.title}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{opt.hint}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Question Browser */}
           <Card>
-            <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between gap-4">
+            <CardHeader className="border-b border-border flex flex-row items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
                 <FileQuestion className="w-4 h-4 text-primary" />
                 Question Selection
@@ -213,7 +242,7 @@ export function QuizBuilder() {
               <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
                 {filteredQuestions.map(q => (
                   <label key={q.questionId}
-                    className="flex items-start gap-3 p-3 rounded-lg border border-white/10 hover:bg-muted/40 cursor-pointer transition-colors">
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       className="accent-primary mt-0.5 shrink-0"
@@ -224,7 +253,7 @@ export function QuizBuilder() {
                       <p className="text-sm font-sinhala line-clamp-2">{q.questionText}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {q.tags.map(t => (
-                          <span key={t} className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded text-muted-foreground">{t}</span>
+                          <span key={t} className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground">{t}</span>
                         ))}
                       </div>
                     </div>
@@ -237,7 +266,7 @@ export function QuizBuilder() {
 
               {/* Selected order */}
               {selectedQuestions.length > 0 && (
-                <div className="border-t border-white/10 pt-3">
+                <div className="border-t border-border pt-3">
                   <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Question Order</p>
                   <div className="space-y-1.5">
                     {selectedQuestions.map((qId, idx) => {
@@ -264,14 +293,14 @@ export function QuizBuilder() {
         {/* Sidebar */}
         <div className="space-y-6">
           <Card>
-            <CardHeader className="border-b border-white/10">
+            <CardHeader className="border-b border-border">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="w-4 h-4" /> Group Assignment
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 p-4">
               {GROUPS.map(g => (
-                <label key={g} className="flex items-center gap-3 rounded-lg border border-white/10 p-3 text-sm cursor-pointer hover:bg-muted/40 transition-colors">
+                <label key={g} className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm cursor-pointer hover:bg-muted/40 transition-colors">
                   <input type="checkbox" className="accent-primary shrink-0"
                     checked={allowedGroups.includes(g)}
                     onChange={() => toggleGroup(g)} />

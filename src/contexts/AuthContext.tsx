@@ -12,6 +12,8 @@ export interface User {
   sub: string;       // Cognito UUID — use for API calls
   role: UserRole;
   email: string;
+  /** Display name from the ID token's given_name/family_name (falls back to email) */
+  name: string;
 }
 
 const ROLE_KEY = 'lms-demo-role';
@@ -19,9 +21,9 @@ const SIGNED_OUT_KEY = 'lms-demo-signed-out';
 
 function demoUser(role: DemoRole): User {
   if (role === 'Student') {
-    return { username: 'Akalanka Dilshan', sub: 'demo-student-sub', email: 'akalanka@student.lk', role: 'Student' };
+    return { username: 'Akalanka Dilshan', name: 'Akalanka Dilshan', sub: 'demo-student-sub', email: 'akalanka@student.lk', role: 'Student' };
   }
-  return { username: 'Asela', sub: 'demo-teacher-sub', email: 'asela@paradiseofaccounting.lk', role: 'TA' };
+  return { username: 'Asela', name: 'Asela Samanpriya', sub: 'demo-teacher-sub', email: 'asela@paradiseofaccounting.lk', role: 'TA' };
 }
 
 function readStoredRole(): DemoRole {
@@ -74,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = session.getIdToken().getJwtToken();
         const payload = session.getIdToken().decodePayload();
         const role = (payload['cognito:groups']?.[0] as User['role']) || (USE_MOCK ? 'Student' : null);
-        setUser({ username: cognitoUser.getUsername(), sub: payload.sub || '', email: (payload.email as string) || '', role });
+        const email = (payload.email as string) || '';
+        const name = [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() || email.split('@')[0] || cognitoUser.getUsername();
+        setUser({ username: cognitoUser.getUsername(), name, sub: payload.sub || '', email, role });
         setIdToken(token);
         setIsLoading(false);
       });
@@ -113,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const token = newSession.getIdToken().getJwtToken();
             const payload = newSession.getIdToken().decodePayload();
             const role = (payload['cognito:groups']?.[0] as User['role']) || null;
-            setUser({ username: cognitoUser.getUsername(), sub: payload.sub || '', email: (payload.email as string) || '', role });
+            const email = (payload.email as string) || '';
+        const name = [payload.given_name, payload.family_name].filter(Boolean).join(' ').trim() || email.split('@')[0] || cognitoUser.getUsername();
+        setUser({ username: cognitoUser.getUsername(), name, sub: payload.sub || '', email, role });
             setIdToken(token);
           }
           resolve();

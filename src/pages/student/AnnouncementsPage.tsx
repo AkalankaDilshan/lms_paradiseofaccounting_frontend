@@ -115,7 +115,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
   if (isLoading) return (
     <div className="space-y-4">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-28 rounded-xl bg-white/5 animate-pulse" />
+        <div key={i} className="h-28 skeleton" />
       ))}
     </div>
   );
@@ -129,9 +129,9 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
-          <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Announcements</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {isTeacher ? 'Post updates and notices for your students.' : 'Stay up to date with class notices.'}
           </p>
         </div>
@@ -149,7 +149,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="stagger space-y-4">
         {(data ?? []).map((ann) => {
           const unread = !isRead(ann.announcementId);
           return (
@@ -204,7 +204,7 @@ export function AnnouncementsPage({ role }: AnnouncementsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
             <Card>
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center justify-between p-5 border-b border-border">
                 <h3 className="font-semibold text-lg">{editItem ? 'Edit Announcement' : 'New Announcement'}</h3>
                 <button onClick={closeModal} className="text-muted-foreground hover:text-foreground">
                   <X className="w-5 h-5" />

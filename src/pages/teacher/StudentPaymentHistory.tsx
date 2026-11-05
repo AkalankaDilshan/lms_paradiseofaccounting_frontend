@@ -51,7 +51,7 @@ export function StudentPaymentHistory() {
 
   if (isLoading) return (
     <div className="space-y-4">
-      {[...Array(4)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />)}
+      {[...Array(4)].map((_, i) => <div key={i} className="h-14 skeleton" />)}
     </div>
   );
 
@@ -78,7 +78,7 @@ export function StudentPaymentHistory() {
       </div>
 
       <Card>
-        <CardHeader className="border-b border-white/10">
+        <CardHeader className="border-b border-border">
           <CardTitle>Payment History (Last 12 Months)</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -136,7 +136,7 @@ export function StudentPaymentHistory() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 print:hidden">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-md">
             <Card>
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center justify-between p-5 border-b border-border">
                 <h3 className="font-semibold">Edit Note — {showNoteModal}</h3>
                 <button onClick={() => setShowNoteModal(null)}><X className="w-5 h-5 text-muted-foreground" /></button>
               </div>

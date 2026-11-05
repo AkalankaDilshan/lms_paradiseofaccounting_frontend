@@ -1,341 +1,332 @@
 import { useMemo, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, CreditCard, Megaphone, Send } from 'lucide-react';
+import type React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Activity,
+  ArrowUpRight,
+  ClipboardList,
+  Megaphone,
+  PenSquare,
+  Send,
+  Target,
+  UserPlus,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import { apiClient } from '../../api/client';
+import { usePayments, useOverview, useTeacherQuizzes } from '../../api/queries';
+import { useAuth } from '../../contexts/AuthContext';
 import { Avatar } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
-import { Sparkline } from '../../components/dashboard/sparkline';
+import { EmptyState, LiveDot, PageHeader, PageSkeleton, StatCard } from '../../components/common';
 import { TodoWidget } from '../../components/TodoWidget';
-import { useNavigate } from 'react-router-dom';
-import {
-  attemptsThisYear,
-  miniKpis,
-  monthlySeries,
-  recentAttempts,
-} from '../../data/admin-dashboard';
 import { cn } from '../../lib/utils';
-import { Badge } from '../../components/ui/badge';
-import { GroupBadge } from '../../components/GroupBadge';
-import { apiClient } from '../../api/client';
-
-const PAGE_SIZE = 5;
-const upColor = 'hsl(var(--success))';
-const downColor = 'hsl(var(--destructive))';
-
-const statusVariants = {
-  Completed: 'success',
-  'In progress': 'warning',
-  Missed: 'destructive',
-} as const;
 
 const tooltipStyle = {
   background: 'hsl(var(--popover))',
   border: '1px solid hsl(var(--border))',
-  borderRadius: 8,
+  borderRadius: 10,
   fontSize: 12,
   color: 'hsl(var(--foreground))',
 };
 
-function formatDelta(delta: number) {
-  const prefix = delta > 0 ? '+' : '';
-  return `${prefix}${delta.toFixed(1)}%`;
-}
-
-function Trend({ delta, good }: { delta: number; good: boolean }) {
-  const Icon = delta >= 0 ? TrendingUp : TrendingDown;
-  return (
-    <span className={cn('inline-flex items-center gap-1 text-xs font-medium', good ? 'text-success' : 'text-destructive')}>
-      <Icon className="size-3.5" />
-      {formatDelta(delta)}
-    </span>
-  );
+function scoreTone(pct: number) {
+  return pct >= 75 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-destructive';
 }
 
 export function TeacherDashboard() {
   const navigate = useNavigate();
-  const [yearView, setYearView] = useState<'this' | 'last'>('this');
-  const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<string[]>([]);
-  
-  // Quick Post state
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { data: overview, isLoading } = useOverview();
+  const { data: payments } = usePayments();
+  // Teachers get the full quiz list from the same endpoint
+  const { data: quizzes } = useTeacherQuizzes();
+
   const [postTitle, setPostTitle] = useState('');
   const [postBody, setPostBody] = useState('');
   const [posting, setPosting] = useState(false);
+  const [postResult, setPostResult] = useState<'ok' | 'error' | null>(null);
 
-  const pageCount = Math.ceil(recentAttempts.length / PAGE_SIZE);
-  const visible = recentAttempts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  const allVisibleSelected = visible.every((row) => selected.includes(row.id));
+  const payment = useMemo(() => {
+    const rows = payments ?? [];
+    const paid = rows.filter((r) => r.currentMonth?.status === 'paid' || r.currentMonth?.status === 'waived').length;
+    const overdue = rows.filter((r) => r.currentMonth?.status === 'overdue').length;
+    return { total: rows.length, paid, overdue, rate: rows.length ? (paid / rows.length) * 100 : null };
+  }, [payments]);
 
-  const areaData = useMemo(
-    () => monthlySeries.map((item) => ({ month: item.month, value: yearView === 'this' ? item.thisYear : item.lastYear })),
-    [yearView],
+  const chartData = useMemo(
+    () =>
+      (overview?.monthly ?? []).map((m) => ({
+        month: format(new Date(`${m.month}-01T00:00:00`), 'MMM'),
+        attempts: m.attempts,
+        average: m.averagePercentage,
+      })),
+    [overview],
   );
 
-  const toggleAll = (checked: boolean) => {
-    const ids = visible.map((row) => row.id);
-    setSelected((current) => (checked ? Array.from(new Set([...current, ...ids])) : current.filter((id) => !ids.includes(id))));
-  };
-
-  const toggleRow = (id: string, checked: boolean) => {
-    setSelected((current) => (checked ? [...current, id] : current.filter((item) => item !== id)));
-  };
+  const now = new Date().toISOString();
+  const liveQuizzes = (quizzes ?? []).filter((q) => q.openAt <= now && now <= q.closeAt).sort((a, b) => a.closeAt.localeCompare(b.closeAt));
+  const nextQuizzes = (quizzes ?? []).filter((q) => q.openAt > now).sort((a, b) => a.openAt.localeCompare(b.openAt));
 
   const handleQuickPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!postTitle || !postBody) return;
     setPosting(true);
+    setPostResult(null);
     try {
-      await apiClient.post('/announcements', {
-        title: postTitle,
-        body: postBody,
-        targetGroups: ['ALL'],
-        isPinned: false,
-        status: 'published'
-      });
+      await apiClient.post('/announcements', { title: postTitle, body: postBody, targetGroups: ['ALL'], isPinned: false, status: 'published' });
       setPostTitle('');
       setPostBody('');
-      alert('Announcement posted successfully!');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to post announcement.');
+      setPostResult('ok');
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    } catch {
+      setPostResult('error');
     } finally {
       setPosting(false);
     }
   };
 
-  // Mock payment data
-  const totalStudents = 75;
-  const paidCount = 48;
-  const collectionRate = (paidCount / totalStudents) * 100;
-  const paymentColor = collectionRate < 50 ? 'text-destructive' : collectionRate < 80 ? 'text-warning' : 'text-success';
+  if (isLoading) return <PageSkeleton />;
+
+  const firstName = user?.name?.split(' ')[0];
 
   return (
-    <div className="space-y-5">
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.7fr)]">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card className="py-4">
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{attemptsThisYear.label}</p>
-              <div className="flex items-end justify-between gap-3">
-                <p className="text-3xl font-semibold tracking-tight tabular-nums">{attemptsThisYear.value}</p>
-                <Trend delta={attemptsThisYear.delta} good={attemptsThisYear.delta >= 0} />
-              </div>
-              <p className="text-xs text-muted-foreground">{attemptsThisYear.vs}</p>
-              <Sparkline data={attemptsThisYear.spark} color={upColor} />
-            </CardContent>
-          </Card>
-          
-          {/* Payment Overview Widget */}
-          <Card className="py-4 border-l-4 border-l-primary cursor-pointer hover:bg-muted/10 transition-colors" onClick={() => navigate('/teacher/payments')}>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Pending Payments</p>
-                <CreditCard className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex items-end justify-between gap-3">
-                <p className="text-3xl font-semibold tracking-tight tabular-nums">{totalStudents - paidCount}</p>
-                <span className={cn('inline-flex items-center gap-1 text-xs font-medium', paymentColor)}>
-                  {collectionRate.toFixed(1)}% Collected
-                </span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                <div className={cn("h-full rounded-full transition-all", 
-                  collectionRate < 50 ? 'bg-destructive' : collectionRate < 80 ? 'bg-warning' : 'bg-success'
-                )} style={{ width: `${collectionRate}%` }} />
-              </div>
-              <div className="flex items-center justify-between pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground">This month's collection</p>
-                <p className="text-sm font-semibold tabular-nums">{paidCount}/{totalStudents} Paid</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1">
-          {miniKpis.slice(0, 2).map((kpi) => {
-            const good = kpi.positiveIsGood ? kpi.delta >= 0 : kpi.delta <= 0;
-            return (
-              <Card key={kpi.label} className="py-3">
-                <CardContent className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{kpi.value}</p>
-                    <div className="mt-1">
-                      <Trend delta={kpi.delta} good={good} />
-                    </div>
-                  </div>
-                  <Sparkline data={kpi.spark} color={good ? upColor : downColor} className="h-12 w-24 shrink-0 sm:w-28" />
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={format(new Date(), 'EEEE, d MMMM')}
+        title={firstName ? `Welcome back, ${firstName}` : 'Overview'}
+        description="How the class is doing, at a glance."
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate('/teacher/students')}>
+              <Users /> Students
+            </Button>
+            <Button onClick={() => navigate('/teacher/quizzes/new')}>
+              <PenSquare /> New quiz
+            </Button>
+          </>
+        }
+      />
+
+      {/* KPIs */}
+      <section className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Active students"
+          icon={Users}
+          value={overview?.students.active}
+          tone="primary"
+          onClick={() => navigate('/teacher/students')}
+          hint={
+            overview && overview.students.pending > 0 ? (
+              <span className="inline-flex items-center gap-1 text-warning">
+                <UserPlus className="size-3.5" /> {overview.students.pending} awaiting approval
+              </span>
+            ) : (
+              `${overview?.students.total ?? 0} enrolled in total`
+            )
+          }
+        />
+        <StatCard
+          label="Class average (30 days)"
+          icon={Target}
+          value={overview?.attempts.last30Days ? overview.attempts.averagePercentageLast30Days : null}
+          decimals={1}
+          suffix="%"
+          tone="success"
+          progress={overview?.attempts.last30Days ? overview.attempts.averagePercentageLast30Days : null}
+          hint={`All-time ${overview?.attempts.averagePercentage ?? 0}%`}
+        />
+        <StatCard
+          label="Attempts (30 days)"
+          icon={Activity}
+          value={overview?.attempts.last30Days}
+          tone="info"
+          hint={`by ${overview?.attempts.studentsActiveLast30Days ?? 0} students`}
+        />
+        <StatCard
+          label="Fees collected this month"
+          icon={Wallet}
+          value={payment.rate}
+          decimals={0}
+          suffix="%"
+          tone={payment.rate === null ? 'primary' : payment.rate < 50 ? 'destructive' : payment.rate < 80 ? 'warning' : 'success'}
+          progress={payment.rate}
+          onClick={() => navigate('/teacher/payments')}
+          hint={`${payment.paid}/${payment.total} paid${payment.overdue ? ` · ${payment.overdue} overdue` : ''}`}
+        />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card className="py-4">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
-            <div>
-              <CardTitle>Attempts overview</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">Quiz attempts across the academic year.</p>
-            </div>
-            <Segmented value={yearView} onChange={setYearView} />
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quiz activity</CardTitle>
+            <CardDescription>Submitted attempts (bars) and class average % (line), last 12 months.</CardDescription>
           </CardHeader>
-          <CardContent className="h-64 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="attemptsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={upColor} stopOpacity={0.28} />
-                    <stop offset="100%" stopColor={upColor} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="value" name="Attempts" stroke={upColor} strokeWidth={2} fill="url(#attemptsFill)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <CardContent className="h-72">
+            {overview && overview.attempts.total === 0 ? (
+              <EmptyState icon={Activity} title="No attempts yet" description="Activity appears once students submit quizzes." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="avgFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                  <YAxis yAxisId="count" allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                  <YAxis yAxisId="pct" orientation="right" domain={[0, 100]} hide />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'hsl(var(--muted) / 0.5)' }} />
+                  <Bar yAxisId="count" dataKey="attempts" name="Attempts" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={28} animationDuration={800} />
+                  <Area
+                    yAxisId="pct"
+                    type="monotone"
+                    dataKey="average"
+                    name="Average %"
+                    stroke="hsl(var(--success))"
+                    strokeWidth={2}
+                    fill="url(#avgFill)"
+                    connectNulls
+                    animationDuration={1000}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* Quick Post & Mini KPIs */}
-        <div className="flex flex-col gap-4">
-          <Card className="flex-1">
-            <CardHeader className="pb-3 border-b border-border/50">
-              <div className="flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Quick Announcement</CardTitle>
+        <Card className="gap-0 py-0">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4">
+            <CardTitle>Quizzes</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/teacher/quizzes')}>
+              Manage <ArrowUpRight />
+            </Button>
+          </CardHeader>
+          <CardContent className="px-0">
+            {liveQuizzes.length === 0 && nextQuizzes.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                title="Nothing open or scheduled"
+                action={
+                  <Button size="sm" onClick={() => navigate('/teacher/quizzes/new')}>
+                    <PenSquare /> Create a quiz
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="stagger divide-y divide-border">
+                {[...liveQuizzes.slice(0, 4), ...nextQuizzes.slice(0, Math.max(0, 5 - liveQuizzes.length))].map((q) => {
+                  const live = q.openAt <= now;
+                  return (
+                    <button
+                      key={q.quizId}
+                      type="button"
+                      onClick={() => navigate(`/teacher/quizzes/${q.quizId}/analytics`)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                    >
+                      <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', live ? 'bg-success/10 text-success' : 'bg-info/10 text-info')}>
+                        {live ? <LiveDot /> : <ClipboardList className="size-4" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-sinhala text-sm font-medium">{q.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {live
+                            ? `Open · closes ${formatDistanceToNow(new Date(q.closeAt), { addSuffix: true })}`
+                            : `Opens ${format(new Date(q.openAt), 'd MMM, h:mm a')}`}
+                        </p>
+                      </div>
+                      <ArrowUpRight className="size-4 text-muted-foreground" />
+                    </button>
+                  );
+                })}
               </div>
-              <CardDescription>Broadcast a message to all students.</CardDescription>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <Card className="gap-0 py-0">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle>Latest submissions</CardTitle>
+            <CardDescription>The most recent quiz attempts across all groups.</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {!overview || overview.recentAttempts.length === 0 ? (
+              <EmptyState icon={Activity} title="No submissions yet" />
+            ) : (
+              <div className="stagger divide-y divide-border">
+                {overview.recentAttempts.slice(0, 8).map((a) => (
+                  <div key={a.attemptId} className="flex items-center gap-3 px-4 py-3">
+                    <Avatar id={a.userId} name={a.studentName} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{a.studentName}</p>
+                      <p className="truncate font-sinhala text-xs text-muted-foreground">{a.quizTitle}</p>
+                    </div>
+                    <div className="hidden w-24 sm:block">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <motion.div
+                          className={cn('h-full rounded-full', a.percentage >= 75 ? 'bg-success' : a.percentage >= 50 ? 'bg-warning' : 'bg-destructive')}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${a.percentage}%` }}
+                          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-20 text-right">
+                      <p className={cn('text-sm font-semibold tabular-nums', scoreTone(a.percentage))}>{a.percentage}%</p>
+                      <p className="text-[11px] text-muted-foreground">{formatDistanceToNow(new Date(a.submittedAt), { addSuffix: true })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Megaphone className="size-4 text-primary" /> Quick announcement
+              </CardTitle>
+              <CardDescription>Posts to every group straight away.</CardDescription>
             </CardHeader>
-            <CardContent className="pt-4">
+            <CardContent>
               <form onSubmit={handleQuickPost} className="space-y-3">
-                <Input 
-                  placeholder="Subject" 
-                  value={postTitle} 
-                  onChange={e => setPostTitle(e.target.value)} 
-                  required 
-                />
-                <Textarea 
-                  placeholder="Message body (Supports Sinhala)..." 
-                  className="resize-none font-sinhala h-24"
+                <Input placeholder="Subject" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} required />
+                <Textarea
+                  placeholder="Message (Sinhala supported)…"
+                  className="h-24 resize-none font-sinhala"
                   value={postBody}
-                  onChange={e => setPostBody(e.target.value)}
+                  onChange={(e) => setPostBody(e.target.value)}
                   required
                 />
-                <div className="flex justify-end">
-                  <Button type="submit" size="sm" disabled={posting || !postTitle || !postBody}>
-                    <Send className="w-3.5 h-3.5 mr-2" />
-                    {posting ? 'Posting...' : 'Post to All Groups'}
+                <div className="flex items-center justify-between gap-3">
+                  <p className={cn('text-xs', postResult === 'error' ? 'text-destructive' : 'text-success')}>
+                    {postResult === 'ok' && 'Posted ✓'}
+                    {postResult === 'error' && 'Couldn’t post. Please try again.'}
+                  </p>
+                  <Button type="submit" disabled={posting || !postTitle || !postBody}>
+                    <Send /> {posting ? 'Posting…' : 'Post to all'}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.3fr)]">
-        <div className="h-full">
           <TodoWidget />
         </div>
-
-        <Card className="gap-0 py-0">
-          <CardHeader className="border-b border-border py-4">
-            <CardTitle>Recent quiz attempts</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">Latest submissions across your learning groups.</p>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10 pl-4">
-                    <Checkbox checked={allVisibleSelected} onCheckedChange={(value) => toggleAll(value === true)} aria-label="Select page" />
-                  </TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead className="hidden md:table-cell">Quiz</TableHead>
-                  <TableHead className="hidden lg:table-cell">Group</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell pr-4">Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visible.map((attempt) => (
-                  <TableRow key={attempt.id} data-state={selected.includes(attempt.id) ? 'selected' : undefined}>
-                    <TableCell className="pl-4">
-                      <Checkbox
-                        checked={selected.includes(attempt.id)}
-                        onCheckedChange={(value) => toggleRow(attempt.id, value === true)}
-                        aria-label={`Select ${attempt.student}`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar id={attempt.studentId} name={attempt.student} size="sm" />
-                        <span className="font-medium">{attempt.student}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden max-w-[220px] truncate md:table-cell">{attempt.quiz}</TableCell>
-                    <TableCell className="hidden lg:table-cell"><GroupBadge group={attempt.group} /></TableCell>
-                    <TableCell className="font-medium tabular-nums">{attempt.score}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariants[attempt.status]}>{attempt.status}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden text-muted-foreground sm:table-cell pr-4">{attempt.date}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-              <p className="text-xs text-muted-foreground">
-                {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, recentAttempts.length)} of {recentAttempts.length}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon-sm" disabled={page === 0} onClick={() => setPage((value) => value - 1)} aria-label="Previous page">
-                  <ChevronLeft />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  disabled={page >= pageCount - 1}
-                  onClick={() => setPage((value) => value + 1)}
-                  aria-label="Next page"
-                >
-                  <ChevronRight />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </section>
-    </div>
-  );
-}
-
-function Segmented({ value, onChange }: { value: 'this' | 'last'; onChange: (value: 'this' | 'last') => void }) {
-  return (
-    <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-      <button
-        type="button"
-        className={cn('rounded-md px-2.5 py-1 font-medium text-muted-foreground', value === 'this' && 'bg-background text-foreground shadow-sm')}
-        onClick={() => onChange('this')}
-      >
-        This Year
-      </button>
-      <button
-        type="button"
-        className={cn('rounded-md px-2.5 py-1 font-medium text-muted-foreground', value === 'last' && 'bg-background text-foreground shadow-sm')}
-        onClick={() => onChange('last')}
-      >
-        Last Year
-      </button>
     </div>
   );
 }

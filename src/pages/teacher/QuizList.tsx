@@ -60,7 +60,7 @@ export function QuizList() {
   if (isLoading) return (
     <div className="space-y-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />
+        <div key={i} className="h-20 skeleton" />
       ))}
     </div>
   );
@@ -74,9 +74,9 @@ export function QuizList() {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-primary">Teacher</p>
-          <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
-          <p className="mt-1 text-muted-foreground">Manage, schedule, and analyze your quizzes.</p>
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Teacher</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Quizzes</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Manage, schedule, and analyze your quizzes.</p>
         </div>
         <Button onClick={() => navigate('/teacher/quizzes/new')} className="shrink-0">
           <Plus className="w-4 h-4 mr-2" /> New Quiz
@@ -118,7 +118,7 @@ export function QuizList() {
               <p className="text-sm">No quizzes found.</p>
             </div>
           ) : (
-            <div className="divide-y divide-white/10">
+            <div className="stagger divide-y divide-border">
               {filtered.map((quiz) => {
                 const status = quizStatus(quiz);
                 return (

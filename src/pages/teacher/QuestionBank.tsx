@@ -47,7 +47,7 @@ export function QuestionBank() {
   if (isLoading) return (
     <div className="space-y-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />
+        <div key={i} className="h-14 skeleton" />
       ))}
     </div>
   );
@@ -61,9 +61,9 @@ export function QuestionBank() {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-primary">Content Studio</p>
-          <h1 className="text-3xl font-bold tracking-tight">Question Bank</h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Content Studio</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Question Bank</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {(data ?? []).length} questions available. Manage and create quiz questions.
           </p>
         </div>
@@ -100,7 +100,7 @@ export function QuestionBank() {
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="stagger">
                 {questions.map((q) => (
                   <TableRow key={q.questionId}>
                     <TableCell className="font-sinhala text-base max-w-xs">

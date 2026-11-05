@@ -97,7 +97,7 @@ export function StudentProfile() {
   if (isLoading) return (
     <div className="space-y-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-24 rounded-xl bg-white/5 animate-pulse" />
+        <div key={i} className="h-24 skeleton" />
       ))}
     </div>
   );
@@ -114,9 +114,9 @@ export function StudentProfile() {
       className="max-w-3xl mx-auto space-y-6 pb-16"
     >
       <div>
-        <p className="text-sm font-medium text-primary">Account</p>
-        <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
-        <p className="mt-1 text-muted-foreground">View and manage your account information.</p>
+        <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Account</p>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">My Profile</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">View and manage your account information.</p>
       </div>
 
       {/* Profile Header */}
@@ -142,7 +142,7 @@ export function StudentProfile() {
 
       {/* Profile Details */}
       <Card>
-        <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between">
+        <CardHeader className="border-b border-border flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Personal Information</CardTitle>
           {!editMode ? (
             <Button variant="outline" size="sm" onClick={() => setEditMode(true)}>
@@ -201,7 +201,7 @@ export function StudentProfile() {
 
       {/* Change Password */}
       <Card>
-        <CardHeader className="border-b border-white/10">
+        <CardHeader className="border-b border-border">
           <CardTitle className="text-lg flex items-center gap-2">
             <Key className="w-4 h-4" /> Change Password
           </CardTitle>

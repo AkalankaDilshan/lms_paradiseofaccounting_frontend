@@ -41,9 +41,9 @@ export function QuizAnalytics() {
 function Header({ subtitle }: { subtitle: string }) {
   return (
     <div>
-      <p className="text-sm font-medium text-primary">Quiz performance</p>
-      <h1 className="text-3xl font-bold tracking-tight">Quiz analytics</h1>
-      <p className="mt-1 text-muted-foreground">{subtitle}</p>
+      <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Quiz performance</p>
+      <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Quiz analytics</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
@@ -60,7 +60,7 @@ function QuizPicker() {
     <div className="space-y-6">
       <Header subtitle="Pick a quiz to see class performance." />
       <Card>
-        <CardContent className="divide-y divide-white/10 p-0">
+        <CardContent className="divide-y divide-border p-0">
           {isLoading && <p className="p-6 text-sm text-muted-foreground">Loading quizzes...</p>}
           {!isLoading && quizzes.length === 0 && <p className="p-6 text-sm text-muted-foreground">No quizzes yet.</p>}
           {quizzes.map(q => (
@@ -110,7 +110,7 @@ function QuizStatsView({ quizId }: { quizId: string }) {
       </div>
 
       <Card>
-        <CardHeader className="border-b border-white/10"><CardTitle className="text-lg">Per-question accuracy</CardTitle></CardHeader>
+        <CardHeader className="border-b border-border"><CardTitle className="text-lg">Per-question accuracy</CardTitle></CardHeader>
         <CardContent className="p-6">
           {answered.length === 0 ? (
             <p className="text-sm text-muted-foreground">No submitted attempts yet.</p>
@@ -131,7 +131,7 @@ function QuizStatsView({ quizId }: { quizId: string }) {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between border-b border-white/10">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-border">
           <CardTitle className="text-lg">Questions to revisit</CardTitle>
           <CircleAlert className="h-4 w-4 text-warning" />
         </CardHeader>

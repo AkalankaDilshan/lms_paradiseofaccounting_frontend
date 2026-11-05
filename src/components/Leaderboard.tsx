@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { Trophy } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { Avatar } from './ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Trophy } from 'lucide-react';
+import { Skeleton } from './common';
+import { cn } from '../lib/utils';
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,40 +16,58 @@ interface LeaderboardEntry {
   percentage?: number;
 }
 
-export function Leaderboard({ quizId }: { quizId: string }) {
+const MEDALS = ['🥇', '🥈', '🥉'];
+const RANK_TINT = ['bg-accent/10', 'bg-muted', 'bg-orange-500/5'];
+
+export function Leaderboard({ quizId, title, compact = false, className }: { quizId: string; title?: string; compact?: boolean; className?: string }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard', quizId],
-    queryFn: async () => {
-      const res = await apiClient.get(`/analytics/quizzes/${quizId}/leaderboard`);
-      return res.data.leaderboard as LeaderboardEntry[];
-    },
+    queryFn: async () => (await apiClient.get(`/analytics/quizzes/${quizId}/leaderboard`)).data.leaderboard as LeaderboardEntry[],
   });
 
-  if (isLoading) return <div className="p-4 text-center text-sm text-muted-foreground">Loading leaderboard...</div>;
-  if (error || !data) return null;
+  if (error) return null;
 
   return (
-    <Card className="mt-8 overflow-hidden border-primary/20">
-      <CardHeader className="border-b border-primary/10 bg-primary/5 pb-4">
-        <CardTitle className="flex items-center text-lg text-primary"><Trophy className="mr-2 h-5 w-5 text-accent" />Top Performers</CardTitle>
+    <Card className={cn('gap-0 py-0', className)}>
+      <CardHeader className="border-b border-border py-4">
+        <CardTitle className="flex items-center gap-2">
+          <Trophy className="size-4 text-accent" /> Top performers
+        </CardTitle>
+        {title && <p className="truncate font-sinhala text-xs text-muted-foreground">{title}</p>}
       </CardHeader>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow className="hover:bg-transparent"><TableHead className="w-16 text-center">Rank</TableHead><TableHead>Student</TableHead><TableHead className="pr-6 text-right">Score</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {data.map((entry) => {
-              const studentId = entry.studentId || `leaderboard-${entry.firstName.toLowerCase().replace(/\s+/g, '-')}`;
+      <CardContent className="px-0">
+        {isLoading ? (
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-10" />
+            ))}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">No attempts recorded yet.</p>
+        ) : (
+          <ol className="divide-y divide-border">
+            {data.map((entry, i) => {
+              const pct = entry.percentage ?? (entry.maxScore ? Math.round((entry.score / entry.maxScore) * 100) : null);
               return (
-                <TableRow key={entry.rank} className={entry.rank === 1 ? 'bg-accent/10 dark:bg-accent/5' : entry.rank === 2 ? 'bg-slate-300/20 dark:bg-slate-300/5' : entry.rank === 3 ? 'bg-orange-700/10 dark:bg-orange-700/5' : ''}>
-                  <TableCell className="text-center font-medium">{entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}</TableCell>
-                  <TableCell className={entry.rank <= 3 ? 'font-semibold' : ''}><div className="flex items-center gap-3"><Avatar id={studentId} name={entry.firstName} size="sm" /><span>{entry.firstName}</span></div></TableCell>
-                  <TableCell className="pr-6 text-right font-bold">{entry.maxScore ? `${entry.score}/${entry.maxScore}` : entry.score}{entry.percentage !== undefined && <span className="ml-2 text-xs font-normal text-muted-foreground">{entry.percentage}%</span>}</TableCell>
-                </TableRow>
+                <motion.li
+                  key={entry.rank}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.3 }}
+                  className={cn('flex items-center gap-3 px-4', compact ? 'py-2.5' : 'py-3', entry.rank <= 3 && RANK_TINT[entry.rank - 1])}
+                >
+                  <span className="w-6 text-center text-sm font-medium tabular-nums">{entry.rank <= 3 ? MEDALS[entry.rank - 1] : entry.rank}</span>
+                  <Avatar id={entry.studentId || `lb-${entry.firstName}`} name={entry.firstName} size="sm" />
+                  <span className={cn('min-w-0 flex-1 truncate text-sm', entry.rank <= 3 && 'font-medium')}>{entry.firstName}</span>
+                  <span className="text-right text-sm font-semibold tabular-nums">
+                    {entry.maxScore ? `${entry.score}/${entry.maxScore}` : entry.score}
+                    {pct !== null && <span className="ml-1.5 text-xs font-normal text-muted-foreground">{pct}%</span>}
+                  </span>
+                </motion.li>
               );
             })}
-            {data.length === 0 && <TableRow><TableCell colSpan={3} className="py-4 text-center text-muted-foreground">No attempts recorded yet.</TableCell></TableRow>}
-          </TableBody>
-        </Table>
+          </ol>
+        )}
       </CardContent>
     </Card>
   );

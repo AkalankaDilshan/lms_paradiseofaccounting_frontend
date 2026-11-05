@@ -133,13 +133,13 @@ export function QuestionForm() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <p className="text-sm font-medium text-primary">Question Bank</p>
-          <h1 className="text-3xl font-bold tracking-tight">{isEdit ? 'Edit Question' : 'New Question'}</h1>
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">Question Bank</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{isEdit ? 'Edit Question' : 'New Question'}</h1>
         </div>
       </div>
 
       <Card>
-        <CardHeader className="border-b border-white/10">
+        <CardHeader className="border-b border-border">
           <CardTitle>Question Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
@@ -215,7 +215,7 @@ export function QuestionForm() {
           <div className="space-y-2">
             <Label>Question Image (Optional)</Label>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border border-dashed border-white/20 hover:border-primary/50 transition-colors text-sm text-muted-foreground hover:text-foreground">
+              <label className="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border border-dashed border-border hover:border-primary/50 transition-colors text-sm text-muted-foreground hover:text-foreground">
                 <ImageIcon className="w-4 h-4" />
                 {imageUploading ? 'Uploading...' : 'Choose image'}
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
@@ -231,13 +231,13 @@ export function QuestionForm() {
               )}
             </div>
             {imageKey && (
-              <img src={imageKey} alt="Question" className="max-h-40 rounded-md border border-white/10 object-contain" />
+              <img src={imageKey} alt="Question" className="max-h-40 rounded-md border border-border object-contain" />
             )}
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="flex gap-3 pt-2 border-t border-white/10">
+          <div className="flex gap-3 pt-2 border-t border-border">
             <Button onClick={handleSubmit} disabled={saveQuestion.isPending}>
               {saveQuestion.isPending ? 'Saving...' : isEdit ? 'Update Question' : 'Save Question'}
             </Button>

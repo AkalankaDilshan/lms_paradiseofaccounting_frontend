@@ -1,202 +1,349 @@
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'motion/react';
+import { format, formatDistanceToNow } from 'date-fns';
+import {
+  ArrowUpRight,
+  Award,
+  CalendarClock,
+  CheckCircle2,
+  ClipboardList,
+  Download,
+  File,
+  FileImage,
+  FileText,
+  Flame,
+  Pin,
+  Target,
+} from 'lucide-react';
 import { apiClient } from '../../api/client';
+import { percent, useAnnouncements, useMaterials, useStudentQuizzes, useTrend } from '../../api/queries';
 import { openMaterial } from '../../lib/materials';
-import { Avatar } from '../../components/ui/avatar';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { CalendarDays, CheckCircle2, Clock3, ArrowUpRight, BookOpen, Target, Pin, Download, FileText, FileImage, File } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { EmptyState, PageSkeleton, StatCard } from '../../components/common';
+import { Sparkline } from '../../components/dashboard/sparkline';
+import { GroupBadge } from '../../components/GroupBadge';
 import { Leaderboard } from '../../components/Leaderboard';
-import { useAuth } from '../../contexts/AuthContext';
-
-interface QuizItem { quizId: string; title: string; openAt: string; closeAt: string; durationMinutes: number; maxAttempts: number; archived: boolean; allowedGroups: string[]; }
-interface Announcement { announcementId: string; title: string; body: string; isPinned: boolean; createdAt: string; targetGroups: string[] }
-interface Material { materialId: string; title: string; description: string; fileKey: string; fileType: string; createdAt: string; }
-
-// TODO: Replace recentAttempts with real API call once attempts history endpoint exists
-const recentAttempts = [
-  { id: 'att-1', title: 'Partnership Accounts — Paper 1', date: '14 Sep 2026', score: 86, status: 'Completed' },
-  { id: 'att-2', title: 'Depreciation Methods — Revision Paper', date: '11 Sep 2026', score: 72, status: 'Completed' },
-  { id: 'att-3', title: 'Control Accounts — 2027 Batch', date: '08 Sep 2026', score: 91, status: 'Completed' },
-];
+import { StudentQuizCard } from '../../components/quiz/StudentQuizCard';
+import { cn } from '../../lib/utils';
 
 const FILE_ICONS: Record<string, typeof FileText> = { pdf: FileText, image: FileImage, doc: File };
+
+function greeting() {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+}
+
+function scoreTone(pct: number) {
+  return pct >= 75 ? 'text-success' : pct >= 50 ? 'text-warning' : 'text-destructive';
+}
 
 export function StudentDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const { data: quizzes, isLoading: loadingQuizzes } = useQuery({ 
-    queryKey: ['studentQuizzes'], 
-    queryFn: async () => (await apiClient.get('/quizzes')).data as QuizItem[] 
-  });
-  
-  const { data: announcements } = useQuery({
-    queryKey: ['announcements'],
-    queryFn: async () => (await apiClient.get('/announcements')).data.items as Announcement[]
-  });
-
-  const { data: materials } = useQuery({
-    queryKey: ['materials'],
-    queryFn: async () => (await apiClient.get('/materials')).data.items as Material[]
+  const { data: quizzes, isLoading: loadingQuizzes } = useStudentQuizzes();
+  const { data: trend, isLoading: loadingTrend } = useTrend(user?.sub);
+  const { data: announcements } = useAnnouncements();
+  const { data: materials } = useMaterials();
+  const { data: profile } = useQuery({
+    queryKey: ['studentProfile', user?.sub],
+    queryFn: async () =>
+      (await apiClient.get(`/admin/students/${user?.sub}`)).data as { firstName?: string; examYear?: number; center?: string; groups?: string[] },
+    enabled: !!user?.sub,
   });
 
-  if (loadingQuizzes) return <div className="animate-pulse space-y-4"><div className="h-40 rounded-2xl bg-white/5" /><div className="h-24 rounded-2xl bg-white/5" /></div>;
-  
-  const activeQuizzes = quizzes?.filter((quiz) => new Date(quiz.closeAt) > new Date()) || [];
-  const nextQuizzes = activeQuizzes.sort((a, b) => new Date(a.closeAt).getTime() - new Date(b.closeAt).getTime()).slice(0, 3);
-  const nextQuiz = nextQuizzes[0];
+  const stats = useMemo(() => {
+    const attempts = trend ?? [];
+    const pcts = attempts.map((a) => a.percentage ?? percent(a.score, a.maxScore));
+    const totalScore = attempts.reduce((s, a) => s + a.score, 0);
+    const totalMax = attempts.reduce((s, a) => s + a.maxScore, 0);
+    const recent = pcts.slice(-3);
+    const earlier = pcts.slice(-6, -3);
+    const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+    const recentAvg = avg(recent);
+    const earlierAvg = avg(earlier);
+    const assigned = (quizzes ?? []).filter((q) => q.state !== 'upcoming').length;
+    const completed = new Set(attempts.map((a) => a.quizId)).size;
+    return {
+      average: totalMax ? percent(totalScore, totalMax) : null,
+      best: pcts.length ? Math.max(...pcts) : null,
+      completed,
+      assigned,
+      momentum: recentAvg !== null && earlierAvg !== null ? Math.round((recentAvg - earlierAvg) * 10) / 10 : null,
+      spark: pcts.slice(-10),
+    };
+  }, [trend, quizzes]);
 
-  const pinnedAnnouncements = announcements?.filter(a => a.isPinned).slice(0, 2) || [];
-  const recentMaterials = materials?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 2) || [];
+  if (loadingQuizzes && loadingTrend) return <PageSkeleton />;
 
-  return <div className="space-y-6">
-    <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/25 via-[#181525] to-[#111116] p-6 md:p-8">
-      <div className="absolute -right-10 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-      <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
-        <div>
-          <p className="mb-2 text-sm font-medium text-primary-foreground/70">{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Welcome back, {user?.username || 'Student'}.</h1>
-          <p className="mt-2 max-w-lg text-sm text-muted-foreground">Keep your momentum going. You are <span className="font-semibold text-foreground">4.2%</span> above your class average this month.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Avatar id={user?.sub || 'student'} name={user?.username || 'Student'} size="lg" className="h-14 w-14" />
+  const actionable = (quizzes ?? [])
+    .filter((q) => q.state === 'open' && (q.hasOpenAttempt || q.attemptsUsed < q.maxAttempts))
+    .sort((a, b) => a.closeAt.localeCompare(b.closeAt));
+  const upcoming = (quizzes ?? []).filter((q) => q.state === 'upcoming').sort((a, b) => a.openAt.localeCompare(b.openAt));
+  const pinned = (announcements ?? []).filter((a) => a.isPinned && a.status !== 'draft').slice(0, 2);
+  const recentMaterials = [...(materials ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
+  const recentAttempts = [...(trend ?? [])].reverse().slice(0, 5);
+  const leaderboardQuiz = recentAttempts[0]?.quizId;
+  const firstName = profile?.firstName || user?.name?.split(' ')[0] || 'there';
+
+  return (
+    <div className="space-y-6">
+      {/* Hero */}
+      <motion.section
+        initial={{ opacity: 0, scale: 0.985 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 md:p-8"
+      >
+        <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-primary/20 blur-3xl animate-float" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-56 rounded-full bg-accent/10 blur-3xl" />
+        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <p className="font-semibold">A/L 2027</p>
-            <p className="text-sm text-muted-foreground">Hatton group</p>
+            <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM yyyy')}</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">
+              {greeting()}, {firstName}.
+            </h1>
+            <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+              {actionable.length > 0
+                ? `You have ${actionable.length} quiz${actionable.length === 1 ? '' : 'zes'} waiting. Let's keep the momentum going.`
+                : stats.momentum !== null && stats.momentum > 0
+                  ? `Your last three quizzes are ${stats.momentum}% above the three before. Nice work!`
+                  : 'You’re all caught up. Review your materials while you wait for the next quiz.'}
+            </p>
           </div>
-        </div>
-      </div>
-    </section>
-
-    {pinnedAnnouncements.length > 0 && (
-      <section className="grid gap-4 sm:grid-cols-2">
-        {pinnedAnnouncements.map(ann => (
-          <Card key={ann.announcementId} className="border-l-4 border-l-accent bg-accent/5">
-            <CardContent className="p-4">
-              <div className="flex gap-2 items-start">
-                <Pin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-sm">{ann.title}</h3>
-                  <p className="text-xs text-foreground/80 mt-1 line-clamp-2 font-sinhala">{ann.body}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-    )}
-
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <StatCard icon={Target} label="My average score" value="83.6%" trend="+4.2%" tone="text-primary" />
-      <StatCard icon={CheckCircle2} label="Quizzes completed" value="18" trend="of 24 assigned" tone="text-success" />
-      <StatCard icon={BookOpen} label="Class position" value="#07" trend="top 10% of class" tone="text-accent" />
-    </section>
-
-    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="space-y-6">
-        <Card className="overflow-hidden border-primary/20 bg-primary/5">
-          <CardHeader className="flex flex-row items-start justify-between border-b border-white/10">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Next quiz window</p>
-              <CardTitle className="mt-2 text-xl">{nextQuiz?.title || 'No upcoming quizzes'}</CardTitle>
-            </div>
-            <CalendarDays className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent className="grid gap-5 p-6 sm:grid-cols-3">
-            <Metric icon={Clock3} label="Duration" value={nextQuiz ? `${nextQuiz.durationMinutes} minutes` : '—'} />
-            <Metric icon={CalendarDays} label="Closes" value={nextQuiz ? new Date(nextQuiz.closeAt).toLocaleDateString() : '—'} />
-            <div className="sm:text-right">
-              <Button disabled={!nextQuiz} onClick={() => nextQuiz && navigate(`/student/quizzes/${nextQuiz.quizId}/attempt`)}>Start quiz<ArrowUpRight className="ml-2 h-4 w-4" /></Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {nextQuizzes.length > 1 && (
-          <Card>
-            <CardHeader className="border-b border-white/10 py-3">
-              <CardTitle className="text-sm">Upcoming Schedule</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 divide-y divide-white/10">
-              {nextQuizzes.slice(1).map(q => (
-                <div key={q.quizId} className="flex justify-between items-center p-3 px-4">
-                  <div>
-                    <p className="text-sm font-medium">{q.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Closes {new Date(q.closeAt).toLocaleDateString()}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/student/quizzes/${q.quizId}/attempt`)}>Start</Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="border-b border-white/10 py-3">
-            <CardTitle className="text-sm">Your progress</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 p-5">
-            <div className="flex items-end justify-between"><span className="text-sm text-muted-foreground">Syllabus completed</span><span className="text-2xl font-bold">74%</span></div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[74%] rounded-full bg-primary" /></div>
-            <p className="text-xs text-muted-foreground">You are on track for your September target.</p>
-          </CardContent>
-        </Card>
-
-        {recentMaterials.length > 0 && (
-          <Card>
-            <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between py-3">
-              <CardTitle className="text-sm">Recent Materials</CardTitle>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => navigate('/student/materials')}>View all</Button>
-            </CardHeader>
-            <CardContent className="p-0 divide-y divide-white/10">
-              {recentMaterials.map(m => {
-                const Icon = FILE_ICONS[m.fileType] || File;
-                return (
-                  <div key={m.materialId} className="flex items-start gap-3 p-3 px-4 hover:bg-muted/30">
-                    <Icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-1">{m.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(m.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <button type="button" onClick={() => openMaterial(m.materialId).catch(() => {})}
-                      className="shrink-0 text-muted-foreground hover:text-foreground" title="Open">
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
-                )
-              })}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </section>
-
-    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between border-b border-white/10">
-          <div><CardTitle className="text-lg">My recent attempts</CardTitle><p className="mt-1 text-sm text-muted-foreground">Your latest accounting quiz results.</p></div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/student/trend')}>View history <ArrowUpRight className="ml-1 h-3 w-3" /></Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-white/10">
-            {recentAttempts.map((attempt) => (
-              <div key={attempt.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Avatar id={attempt.id} name={attempt.title} size="sm" className="rounded-lg" />
-                  <div className="min-w-0"><p className="truncate text-sm font-medium">{attempt.title}</p><p className="text-xs text-muted-foreground">{attempt.date}</p></div>
-                </div>
-                <div className="text-right"><p className="font-bold text-success">{attempt.score}%</p><p className="text-xs text-muted-foreground">{attempt.status}</p></div>
-              </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {profile?.examYear ? (
+              <span className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium backdrop-blur">
+                A/L {profile.examYear}
+              </span>
+            ) : null}
+            {(profile?.groups ?? []).map((g) => (
+              <GroupBadge key={g} group={g} />
             ))}
           </div>
-        </CardContent>
-      </Card>
-      <Leaderboard quizId="q1" />
-    </section>
-  </div>;
-}
+        </div>
+      </motion.section>
 
-function StatCard({ icon: Icon, label, value, trend, tone }: { icon: typeof Target; label: string; value: string; trend: string; tone: string }) { return <Card><CardContent className="p-5"><div className="mb-4 flex items-center justify-between"><span className="text-sm text-muted-foreground">{label}</span><Icon className={`h-5 w-5 ${tone}`} /></div><p className="text-3xl font-bold tracking-tight">{value}</p><p className="mt-1 text-xs text-muted-foreground">{trend}</p></CardContent></Card>; }
-function Metric({ icon: Icon, label, value }: { icon: typeof Clock3; label: string; value: string }) { return <div className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{label}</p><p className="text-sm font-semibold">{value}</p></div></div>; }
+      {pinned.length > 0 && (
+        <section className="stagger grid gap-3 sm:grid-cols-2">
+          {pinned.map((a) => (
+            <Card key={a.announcementId} className="interactive cursor-pointer border-l-2 border-l-accent py-0" onClick={() => navigate('/student/announcements')}>
+              <CardContent className="flex items-start gap-3 p-4">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Pin className="size-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{a.title}</p>
+                  <p className="mt-0.5 line-clamp-2 font-sinhala text-xs text-muted-foreground">{a.body}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
+
+      {/* KPIs */}
+      <section className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Average score"
+          icon={Target}
+          value={stats.average}
+          decimals={1}
+          suffix="%"
+          tone="primary"
+          progress={stats.average}
+          hint={stats.average === null ? 'Take a quiz to see your average' : 'Across all your submitted attempts'}
+        />
+        <StatCard
+          label="Quizzes completed"
+          icon={CheckCircle2}
+          value={stats.completed}
+          tone="success"
+          progress={stats.assigned ? (stats.completed / stats.assigned) * 100 : null}
+          hint={`of ${stats.assigned} assigned so far`}
+        />
+        <StatCard label="Best score" icon={Award} value={stats.best} decimals={1} suffix="%" tone="accent" hint="Your personal best" />
+        <Card className="py-4">
+          <CardContent className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Momentum</p>
+              <span className="flex size-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
+                <Flame className="size-4" />
+              </span>
+            </div>
+            <p className={cn('text-3xl font-semibold tracking-tight tabular-nums', stats.momentum === null ? 'text-muted-foreground' : stats.momentum >= 0 ? 'text-success' : 'text-destructive')}>
+              {stats.momentum === null ? '—' : `${stats.momentum > 0 ? '+' : ''}${stats.momentum}%`}
+            </p>
+            {stats.spark.length > 1 ? (
+              <Sparkline data={stats.spark} color="hsl(var(--primary))" className="h-8" />
+            ) : (
+              <p className="text-xs text-muted-foreground">Last 3 quizzes vs the 3 before</p>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-6">
+          {/* Up next */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight">Up next</h2>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/student/quizzes')}>
+                All quizzes <ArrowUpRight />
+              </Button>
+            </div>
+            {actionable.length === 0 ? (
+              <Card className="py-0">
+                <EmptyState
+                  icon={ClipboardList}
+                  title="No quizzes waiting for you"
+                  description={upcoming[0] ? `Next: “${upcoming[0].title}” opens ${formatDistanceToNow(new Date(upcoming[0].openAt), { addSuffix: true })}.` : 'New quizzes will appear here when they open.'}
+                />
+              </Card>
+            ) : (
+              <div className="stagger grid gap-3">
+                {actionable.slice(0, 3).map((q) => (
+                  <StudentQuizCard key={q.quizId} quiz={q} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent attempts */}
+          <Card className="gap-0 py-0">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4">
+              <div>
+                <CardTitle>Recent results</CardTitle>
+                <p className="mt-0.5 text-sm text-muted-foreground">Your latest submitted quizzes.</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/student/trend')}>
+                Performance <ArrowUpRight />
+              </Button>
+            </CardHeader>
+            <CardContent className="px-0">
+              {recentAttempts.length === 0 ? (
+                <EmptyState icon={Target} title="No results yet" description="Your scores will appear here after your first quiz." />
+              ) : (
+                <div className="stagger divide-y divide-border">
+                  {recentAttempts.map((a, i) => {
+                    const pct = a.percentage ?? percent(a.score, a.maxScore);
+                    return (
+                      <button
+                        key={a.attemptId ?? i}
+                        type="button"
+                        disabled={!a.attemptId}
+                        onClick={() => a.attemptId && navigate(`/student/quizzes/${a.quizId}/results/${a.attemptId}`)}
+                        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-default"
+                      >
+                        <div className="relative size-10 shrink-0">
+                          <svg viewBox="0 0 36 36" className="size-10 -rotate-90">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
+                            <motion.circle
+                              cx="18"
+                              cy="18"
+                              r="15"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              className={scoreTone(pct)}
+                              strokeDasharray={2 * Math.PI * 15}
+                              initial={{ strokeDashoffset: 2 * Math.PI * 15 }}
+                              animate={{ strokeDashoffset: 2 * Math.PI * 15 * (1 - pct / 100) }}
+                              transition={{ duration: 0.9, delay: 0.1 * i, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-sinhala text-sm font-medium">{a.quizTitle || 'Quiz'}</p>
+                          <p className="text-xs text-muted-foreground">{format(new Date(a.submittedAt), 'd MMM yyyy, h:mm a')}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn('font-semibold tabular-nums', scoreTone(pct))}>{pct}%</p>
+                          <p className="text-xs text-muted-foreground tabular-nums">
+                            {a.score}/{a.maxScore}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {upcoming.length > 0 && (
+            <Card className="gap-0 py-0">
+              <CardHeader className="border-b border-border py-4">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarClock className="size-4 text-info" /> Coming up
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="stagger divide-y divide-border px-0">
+                {upcoming.slice(0, 4).map((q) => (
+                  <div key={q.quizId} className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-lg bg-info/10 text-info">
+                      <span className="text-[10px] font-medium uppercase leading-none">{format(new Date(q.openAt), 'MMM')}</span>
+                      <span className="text-sm font-semibold leading-tight">{format(new Date(q.openAt), 'd')}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-sinhala text-sm font-medium">{q.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(q.openAt), 'h:mm a')} · {q.durationMinutes} min
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {leaderboardQuiz && <Leaderboard quizId={leaderboardQuiz} title={recentAttempts[0]?.quizTitle} compact />}
+
+          <Card className="gap-0 py-0">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4">
+              <CardTitle>Latest materials</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/student/materials')}>
+                View all
+              </Button>
+            </CardHeader>
+            <CardContent className="px-0">
+              {recentMaterials.length === 0 ? (
+                <EmptyState icon={FileText} title="No materials yet" className="py-8" />
+              ) : (
+                <div className="stagger divide-y divide-border">
+                  {recentMaterials.map((m) => {
+                    const Icon = FILE_ICONS[m.fileType] || File;
+                    return (
+                      <button
+                        key={m.materialId}
+                        type="button"
+                        onClick={() => openMaterial(m.materialId).catch(() => {})}
+                        className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                      >
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Icon className="size-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-1 text-sm font-medium">{m.title}</p>
+                          <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(m.createdAt), { addSuffix: true })}</p>
+                        </div>
+                        <Download className="size-4 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-hover:text-foreground" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+}

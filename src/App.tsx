@@ -7,6 +7,7 @@ import { SignupPage } from './pages/auth/SignupPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { PendingApprovalPage } from './pages/auth/PendingApprovalPage';
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import { StudentQuizzes } from './pages/student/StudentQuizzes';
 import { StudentProfile } from './pages/student/StudentProfile';
 import { QuizAttempt } from './pages/student/QuizAttempt';
 import { QuizResults } from './pages/student/QuizResults';
@@ -22,6 +23,7 @@ import { QuestionForm } from './pages/teacher/QuestionForm';
 import { StudentManagement } from './pages/teacher/StudentManagement';
 import { QuizAnalytics } from './pages/teacher/QuizAnalytics';
 import { SettingsPage } from './pages/teacher/SettingsPage';
+import { TeamPage } from './pages/teacher/TeamPage';
 import { PaymentsPage } from './pages/teacher/PaymentsPage';
 import { StudentPaymentHistory } from './pages/teacher/StudentPaymentHistory';
 import { AttendancePage } from './pages/teacher/AttendancePage';
@@ -32,7 +34,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider as JotaiProvider } from 'jotai';
 import type { ReactNode } from 'react';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000 } },
+});
 
 function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles: string[] }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -40,7 +44,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allow
   if (isLoading) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <img src="/logoIcon.png" alt="" className="size-12 animate-pulse rounded-xl" />
       </div>
     );
   }
@@ -76,6 +80,7 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={['Student']}>
               <Routes>
                 <Route path="/" element={<StudentDashboard />} />
+                <Route path="/quizzes" element={<StudentQuizzes />} />
                 <Route path="/trend" element={<StudentTrend />} />
                 <Route path="/profile" element={<StudentProfile />} />
                 <Route path="/announcements" element={<AnnouncementsPage />} />
@@ -109,6 +114,7 @@ function AppRoutes() {
                 <Route path="/messages" element={<TeacherMessagesPage role="teacher" />} />
                 <Route path="/materials" element={<TeacherMaterialsPage role="teacher" />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/team" element={<TeamPage />} />
               </Routes>
             </ProtectedRoute>
           }

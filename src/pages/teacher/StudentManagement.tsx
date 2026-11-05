@@ -7,10 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Upload, UserPlus, Search, Trash2, Users, X, Plus } from 'lucide-react';
+import { Upload, UserPlus, Search, Users, X, Plus, Download, RotateCcw, Ban, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from '../../components/ui/badge';
 import { GroupBadge } from '../../components/GroupBadge';
+import { EmptyState, PageHeader, Skeleton } from '../../components/common';
+import { useAuth } from '../../contexts/AuthContext';
+import { downloadCsv } from '../../lib/csv';
+import { cn } from '../../lib/utils';
 
 const GROUPS = [
   '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -53,7 +57,10 @@ const CSV_BATCH_ROWS = 25;
 
 export function StudentManagement() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'SuperAdmin';
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showGroupPanel, setShowGroupPanel] = useState<Student | null>(null);
   const [csvResult, setCsvResult] = useState<CsvImportResult | null>(null);
@@ -91,6 +98,14 @@ export function StudentManagement() {
   const suspendStudent = useMutation({
     mutationFn: async (userId: string) => {
       await apiClient.delete(`/admin/students/${userId}`);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
+  });
+
+  // Undo a suspension — re-enables the Cognito user (SuperAdmin only)
+  const reactivateStudent = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiClient.post(`/admin/students/${userId}/reactivate`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
   });
@@ -151,14 +166,34 @@ export function StudentManagement() {
   });
 
   const filtered = (data ?? []).filter(s =>
-    `${s.firstName} ${s.lastName} ${s.email} ${s.school} ${s.center}`.toLowerCase().includes(search.toLowerCase())
+    (statusFilter === 'all' || s.status === statusFilter) &&
+    `${s.firstName} ${s.lastName} ${s.email} ${s.school} ${s.center} ${s.groups.join(' ')}`.toLowerCase().includes(search.toLowerCase())
   );
-  const pendingCount = (data ?? []).filter(s => s.status === 'pending').length;
+  const counts = {
+    all: (data ?? []).length,
+    active: (data ?? []).filter(s => s.status === 'active').length,
+    pending: (data ?? []).filter(s => s.status === 'pending').length,
+    suspended: (data ?? []).filter(s => s.status === 'suspended').length,
+  };
+
+  const exportStudents = () =>
+    downloadCsv(
+      `students-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['First name', 'Last name', 'Email', 'Phone', 'School', 'Exam year', 'Center', 'Groups', 'Status'],
+      filtered.map(s => [s.firstName, s.lastName, s.email, s.phone, s.school, s.examYear || '', s.center, s.groups.join(' '), s.status]),
+    );
+
+  const confirmSuspend = (student: Student) => {
+    if (window.confirm(`Suspend ${student.firstName} ${student.lastName}? They'll be signed out and can't start quizzes or download materials until reactivated.`)) {
+      suspendStudent.mutate(student.userId);
+    }
+  };
 
   if (isLoading) return (
     <div className="space-y-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-14 rounded-xl bg-white/5 animate-pulse" />
+      <Skeleton className="h-10 w-72" />
+      {[...Array(5)].map((_, i) => (
+        <Skeleton key={i} className="h-14" />
       ))}
     </div>
   );
@@ -170,28 +205,26 @@ export function StudentManagement() {
       transition={{ duration: 0.25 }}
       className="space-y-6"
     >
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-sm font-medium text-primary">Admin</p>
-          <h1 className="text-3xl font-bold tracking-tight">Student Management</h1>
-          <p className="mt-1 text-muted-foreground flex flex-wrap items-center gap-2">
-            {(data ?? []).length} students enrolled. Manage enrollments, CSV imports, and groups.
-            {pendingCount > 0 && (
-              <Badge variant="warning">{pendingCount} awaiting approval</Badge>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" onClick={() => csvRef.current?.click()}>
-            <Upload className="mr-2 h-4 w-4" /> Import CSV
-          </Button>
-          <input ref={csvRef} type="file" accept=".csv" className="hidden"
-            onChange={e => e.target.files?.[0] && importCsv.mutate(e.target.files[0])} />
-          <Button onClick={() => setShowAddModal(true)}>
-            <UserPlus className="mr-2 h-4 w-4" /> Add Student
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Students"
+        title="Student management"
+        description={`${counts.all} students enrolled. Approve sign-ups, assign groups, import from CSV.`}
+        actions={
+          <>
+            <Button variant="outline" onClick={exportStudents} disabled={filtered.length === 0}>
+              <Download /> Export
+            </Button>
+            <Button variant="outline" onClick={() => csvRef.current?.click()} disabled={importCsv.isPending}>
+              <Upload /> Import CSV
+            </Button>
+            <input ref={csvRef} type="file" accept=".csv" className="hidden"
+              onChange={e => { if (e.target.files?.[0]) importCsv.mutate(e.target.files[0]); e.target.value = ''; }} />
+            <Button onClick={() => setShowAddModal(true)}>
+              <UserPlus /> Add student
+            </Button>
+          </>
+        }
+      />
 
       {csvProgress && <p className="text-sm text-muted-foreground">{csvProgress}</p>}
       {importCsv.isError && (
@@ -221,21 +254,30 @@ export function StudentManagement() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Search by name, email, school..."
-          value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10" />
+      {/* Search + status filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search name, email, school, group…"
+            value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
+        </div>
+        <div className="inline-flex w-fit flex-wrap rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+          {(['all', 'active', 'pending', 'suspended'] as const).map(f => (
+            <button key={f} type="button" onClick={() => setStatusFilter(f)}
+              className={cn('rounded-md px-2.5 py-1 font-medium capitalize text-muted-foreground transition-colors',
+                statusFilter === f && 'bg-background text-foreground shadow-sm')}>
+              {f} <span className={cn('ml-1 tabular-nums', f === 'pending' && counts.pending > 0 && 'text-warning')}>{counts[f]}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
       <Card>
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">
-              <Users className="mx-auto mb-3 h-8 w-8 opacity-30" />
-              <p className="text-sm">No students found.</p>
-            </div>
+            <EmptyState icon={Users} title="No students found"
+              description={search || statusFilter !== 'all' ? 'Try a different search or filter.' : 'Add students one by one, or import a CSV.'} />
           ) : (
             <Table>
               <TableHeader>
@@ -247,9 +289,9 @@ export function StudentManagement() {
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="stagger">
                 {filtered.map((student) => (
-                  <TableRow key={student.userId}>
+                  <TableRow key={student.userId} className={cn('transition-colors', student.status === 'suspended' && 'opacity-60')}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar id={student.userId} name={`${student.firstName} ${student.lastName}`} size="sm" />
@@ -277,7 +319,7 @@ export function StudentManagement() {
                           : student.status === 'active' ? 'success'
                           : 'destructive'
                       }>
-                        {student.status === 'pending' ? 'Pending Approval' : student.status}
+                        {student.status === 'pending' ? 'Pending approval' : student.status === 'active' ? 'Active' : 'Suspended'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -286,19 +328,28 @@ export function StudentManagement() {
                           <Button variant="ghost" size="sm" className="text-success hover:text-success"
                             onClick={() => approveStudent.mutate(student.userId)}
                             disabled={approveStudent.isPending}>
-                            Approve
+                            <Check /> Approve
                           </Button>
                         )}
                         <Button variant="ghost" size="sm"
                           onClick={() => setShowGroupPanel(student)}>
                           <Users className="w-4 h-4 mr-1" /> Groups
                         </Button>
-                        <Button variant="ghost" size="icon"
-                          onClick={() => suspendStudent.mutate(student.userId)}
-                          disabled={suspendStudent.isPending}
-                          title="Suspend student">
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        {isSuperAdmin && student.status === 'suspended' && (
+                          <Button variant="ghost" size="sm"
+                            onClick={() => reactivateStudent.mutate(student.userId)}
+                            disabled={reactivateStudent.isPending}>
+                            <RotateCcw /> Reactivate
+                          </Button>
+                        )}
+                        {isSuperAdmin && student.status !== 'suspended' && (
+                          <Button variant="ghost" size="icon"
+                            onClick={() => confirmSuspend(student)}
+                            disabled={suspendStudent.isPending}
+                            title="Suspend student" aria-label={`Suspend ${student.firstName}`}>
+                            <Ban className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -314,7 +365,7 @@ export function StudentManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
             <Card>
-              <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between">
+              <CardHeader className="border-b border-border flex flex-row items-center justify-between">
                 <CardTitle>Add New Student</CardTitle>
                 <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-5 h-5" />
@@ -406,7 +457,7 @@ export function StudentManagement() {
               {GROUPS.map(g => {
                 const inGroup = showGroupPanel.groups.includes(g);
                 return (
-                  <div key={g} className="flex items-center justify-between p-3 rounded-lg border border-white/10">
+                  <div key={g} className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <GroupBadge group={g} />
                     {inGroup ? (
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"

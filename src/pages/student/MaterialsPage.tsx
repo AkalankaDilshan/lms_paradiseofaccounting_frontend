@@ -135,7 +135,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
 
   if (isLoading) return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {[...Array(4)].map((_, i) => <div key={i} className="h-32 rounded-xl bg-white/5 animate-pulse" />)}
+      {[...Array(4)].map((_, i) => <div key={i} className="h-32 skeleton" />)}
     </div>
   );
 
@@ -144,9 +144,9 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
       className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-sm font-medium text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
-          <h1 className="text-3xl font-bold tracking-tight">Study Materials</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-primary">{isTeacher ? 'Teacher' : 'Student'}</p>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Study Materials</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {isTeacher ? 'Upload and manage study resources.' : 'Browse and download your study materials.'}
           </p>
         </div>
@@ -183,14 +183,14 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
           <p className="text-sm">No materials found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="stagger grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(m => {
             const Icon = FILE_ICONS[m.fileType] || File;
             return (
               <motion.div key={m.materialId}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}>
-                <Card className="h-full hover:border-primary/30 transition-colors group">
+                <Card className="interactive h-full hover:ring-primary/30 group">
                   <CardContent className="p-5 flex flex-col h-full">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="p-2 rounded-lg bg-primary/10 shrink-0">
@@ -203,7 +203,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                     </div>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {m.tags.map(t => (
-                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground">{t}</span>
+                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{t}</span>
                       ))}
                     </div>
                     <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
@@ -240,7 +240,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
             <Card>
-              <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center justify-between p-5 border-b border-border">
                 <h3 className="font-semibold text-lg">Upload Material</h3>
                 <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-muted-foreground" /></button>
               </div>
@@ -269,7 +269,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                 <div className="space-y-2">
                   <Label>File (PDF, image, doc — max 20MB)</Label>
                   <div
-                    className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-white/20 rounded-lg p-6 hover:border-primary/40 cursor-pointer transition-colors"
+                    className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/40 cursor-pointer transition-colors"
                     onClick={() => fileRef.current?.click()}
                   >
                     <Upload className="w-6 h-6 text-muted-foreground" />
