@@ -10,6 +10,8 @@ interface LeaderboardEntry {
   studentId?: string;
   firstName: string;
   score: number;
+  maxScore?: number;
+  percentage?: number;
 }
 
 export function Leaderboard({ quizId }: { quizId: string }) {
@@ -39,7 +41,7 @@ export function Leaderboard({ quizId }: { quizId: string }) {
                 <TableRow key={entry.rank} className={entry.rank === 1 ? 'bg-accent/10 dark:bg-accent/5' : entry.rank === 2 ? 'bg-slate-300/20 dark:bg-slate-300/5' : entry.rank === 3 ? 'bg-orange-700/10 dark:bg-orange-700/5' : ''}>
                   <TableCell className="text-center font-medium">{entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}</TableCell>
                   <TableCell className={entry.rank <= 3 ? 'font-semibold' : ''}><div className="flex items-center gap-3"><Avatar id={studentId} name={entry.firstName} size="sm" /><span>{entry.firstName}</span></div></TableCell>
-                  <TableCell className="pr-6 text-right font-bold">{entry.score}</TableCell>
+                  <TableCell className="pr-6 text-right font-bold">{entry.maxScore ? `${entry.score}/${entry.maxScore}` : entry.score}{entry.percentage !== undefined && <span className="ml-2 text-xs font-normal text-muted-foreground">{entry.percentage}%</span>}</TableCell>
                 </TableRow>
               );
             })}

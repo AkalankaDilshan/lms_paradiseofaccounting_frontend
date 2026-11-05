@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { apiClient } from '../../api/client';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -38,6 +39,9 @@ interface AttemptData {
   attemptId: string;
   quizId: string;
   durationMinutes: number;
+  // Server deadline (start + duration, capped at the quiz's closeAt); submits
+  // more than a couple of minutes after it are rejected as expired
+  expiresAt?: string;
   questions: Question[];
 }
 
@@ -134,9 +138,9 @@ export function QuizAttempt() {
     setAnswers(data.answers);
     setFlagged(new Set(data.flaggedIds));
     setCurrentIndex(data.currentIndex);
-    const totalSeconds = data.durationMinutes * 60;
-    const elapsed = Math.floor((Date.now() - data.startedAtMs) / 1000);
-    const remaining = Math.max(0, totalSeconds - elapsed);
+    const remaining = data.expiresAt
+      ? Math.max(0, Math.floor((Date.parse(data.expiresAt) - Date.now()) / 1000))
+      : Math.max(0, data.durationMinutes * 60 - Math.floor((Date.now() - data.startedAtMs) / 1000));
     setTimeLeft(remaining);
     // A resumed attempt whose time already ran out while the student was away
     // skips straight to auto-submit, same as a normal in-session timeout.
@@ -182,8 +186,14 @@ export function QuizAttempt() {
     onSuccess: () => {
       clearPersistedAttempt(quizId);
       navigate(`/student/quizzes/${quizId}/results/${data?.attemptId}`);
-    }
+    },
+    // 409 = the server has closed this attempt (expired or already submitted);
+    // other failures (offline) keep the saved progress so the student can retry
+    onError: (err) => {
+      if (isAxiosError(err) && err.response?.status === 409) clearPersistedAttempt(quizId);
+    },
   });
+  const submitClosed = isAxiosError(submitAttempt.error) && submitAttempt.error.response?.status === 409;
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -199,6 +209,21 @@ export function QuizAttempt() {
     </div>
   );
   if (error || !data) return <div className="p-8 text-center text-destructive">Failed to start quiz. Max attempts reached or quiz closed.</div>;
+  if (submitClosed) {
+    const message = isAxiosError(submitAttempt.error) && submitAttempt.error.response?.data?.error;
+    return (
+      <div className="max-w-md mx-auto p-8 text-center space-y-4">
+        <AlertCircle className="w-10 h-10 mx-auto text-destructive" />
+        <p className="font-medium text-destructive">{message || 'This attempt can no longer be submitted.'}</p>
+        <Button variant="outline" onClick={() => navigate('/student')}>Back to dashboard</Button>
+      </div>
+    );
+  }
+  const submitFailedBanner = submitAttempt.isError && (
+    <p className="text-destructive text-sm font-medium flex items-center">
+      <AlertCircle className="w-4 h-4 mr-1" /> Couldn't submit — check your connection and press Submit again. Your answers are saved on this device.
+    </p>
+  );
 
   // Danger kicks in at whichever is bigger: 10% of total duration, or 2 minutes
   // (capped at the full duration for very short quizzes) — a 5-minute quiz still
@@ -234,6 +259,7 @@ export function QuizAttempt() {
           <p className="text-sm text-muted-foreground">
             {answeredCount} of {totalQuestions} answered · tap a row to jump back and change it
           </p>
+          {submitFailedBanner}
         </div>
 
         <Card className="py-0 overflow-hidden">
@@ -317,6 +343,7 @@ export function QuizAttempt() {
             <AlertCircle className="w-4 h-4 mr-1" /> {formatTime(timeLeft ?? 0)} remaining!
           </p>
         )}
+        {submitFailedBanner}
 
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">

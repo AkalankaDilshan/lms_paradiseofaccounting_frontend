@@ -103,7 +103,8 @@ export function QuestionForm() {
       });
       const { uploadUrl, imageKey: key } = res.data;
       // Upload directly to S3
-      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+      const put = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+      if (!put.ok) throw new Error('Upload to storage failed');
       setImageKey(key);
     } catch {
       setError('Image upload failed.');
@@ -217,7 +218,7 @@ export function QuestionForm() {
               <label className="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border border-dashed border-white/20 hover:border-primary/50 transition-colors text-sm text-muted-foreground hover:text-foreground">
                 <ImageIcon className="w-4 h-4" />
                 {imageUploading ? 'Uploading...' : 'Choose image'}
-                <input type="file" accept="image/*" className="hidden"
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
                   onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])} />
               </label>
               {imageKey && (

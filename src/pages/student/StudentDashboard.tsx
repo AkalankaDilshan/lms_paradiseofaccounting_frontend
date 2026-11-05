@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
+import { openMaterial } from '../../lib/materials';
 import { Avatar } from '../../components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -159,9 +160,10 @@ export function StudentDashboard() {
                       <p className="text-sm font-medium line-clamp-1">{m.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{new Date(m.createdAt).toLocaleDateString()}</p>
                     </div>
-                    <a href={m.fileKey} target="_blank" rel="noreferrer" className="shrink-0 text-muted-foreground hover:text-foreground">
+                    <button type="button" onClick={() => openMaterial(m.materialId).catch(() => {})}
+                      className="shrink-0 text-muted-foreground hover:text-foreground" title="Open">
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                 )
               })}

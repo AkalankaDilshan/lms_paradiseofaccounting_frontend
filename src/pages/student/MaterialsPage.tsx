@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
+import { openMaterial } from '../../lib/materials';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -51,6 +52,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
   const [typeFilter, setTypeFilter] = useState<'all' | 'pdf' | 'image' | 'doc'>('all');
   const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   // Upload form
   const [formTitle, setFormTitle] = useState('');
@@ -78,11 +80,12 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
       const { uploadUrl, fileKey } = urlRes.data;
 
       setUploadProgress('Uploading file...');
-      await fetch(uploadUrl, {
+      const put = await fetch(uploadUrl, {
         method: 'PUT',
         body: selectedFile,
         headers: { 'Content-Type': selectedFile.type },
       });
+      if (!put.ok) throw new Error('Upload to storage failed');
 
       setUploadProgress('Saving metadata...');
       const fileType = selectedFile.type.startsWith('image/') ? 'image'
@@ -154,6 +157,10 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
         )}
       </div>
 
+      {downloadError && (
+        <p className="text-sm font-medium text-destructive">Couldn't open "{downloadError}" — please try again.</p>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[180px]">
@@ -204,11 +211,10 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                       <span>{new Date(m.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="mt-3 flex gap-2">
-                      <a href={m.fileKey} target="_blank" rel="noreferrer" className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full h-9">
-                          <Download className="w-3.5 h-3.5 mr-1.5" /> Download
-                        </Button>
-                      </a>
+                      <Button variant="outline" size="sm" className="flex-1 h-9"
+                        onClick={() => openMaterial(m.materialId).catch(() => setDownloadError(m.title))}>
+                        <Download className="w-3.5 h-3.5 mr-1.5" /> Download
+                      </Button>
                       {isTeacher && (
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive shrink-0"
                           onClick={() => deleteMaterial.mutate(m.materialId)}>
@@ -270,7 +276,7 @@ export function MaterialsPage({ role }: MaterialsPageProps) {
                     <p className="text-sm text-muted-foreground">
                       {selectedFile ? selectedFile.name : 'Click to choose a file'}
                     </p>
-                    <input ref={fileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,image/*"
+                    <input ref={fileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/jpeg,image/png,image/webp"
                       onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
                   </div>
                 </div>

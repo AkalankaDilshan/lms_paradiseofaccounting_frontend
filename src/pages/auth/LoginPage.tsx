@@ -15,7 +15,6 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [challengeUser, setChallengeUser] = useState<CognitoUser | null>(null);
-  const [requiredAttributes, setRequiredAttributes] = useState<Record<string, string>>({});
   const { refreshSession, signInDemo, isDemo } = useAuth();
   const navigate = useNavigate();
 
@@ -78,12 +77,12 @@ export function LoginPage() {
         setError(err.message || 'Login failed');
         setLoading(false);
       },
-      newPasswordRequired: (userAttributes) => {
+      // Admin-created accounts must replace their emailed temporary password.
+      // Only the new password is sent back — echoing the user's existing
+      // attributes would try to write custom:role/custom:tenantId, which the
+      // app client isn't allowed to change.
+      newPasswordRequired: () => {
         setChallengeUser(cognitoUser);
-        const attrs = { ...userAttributes };
-        delete attrs.email_verified;
-        delete attrs.phone_number_verified;
-        setRequiredAttributes(attrs);
         setLoading(false);
       },
     });
@@ -105,7 +104,7 @@ export function LoginPage() {
 
     setLoading(true);
 
-    challengeUser!.completeNewPasswordChallenge(newPassword, requiredAttributes, {
+    challengeUser!.completeNewPasswordChallenge(newPassword, {}, {
       onSuccess: () => {
         refreshSession().then(() => {
           navigate('/');

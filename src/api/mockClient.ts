@@ -418,6 +418,10 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
       },
     ]
   });
+  mock.onGet(/\/materials\/[^/]+\/download/).reply(200, {
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    expiresIn: 300,
+  });
   mock.onPost('/materials').reply(201, { materialId: 'm-new', success: true });
   mock.onGet('/materials/upload-url').reply(200, {
     uploadUrl: 'https://mock-s3-presigned-url.example.com/put',
