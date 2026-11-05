@@ -5,6 +5,7 @@ import { userPool } from '../../contexts/AuthContext';
 import { USE_MOCK } from '../../lib/cognito';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { PasswordInput } from '../../components/PasswordInput';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 
@@ -114,8 +115,8 @@ export function ForgotPasswordPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input 
-                  id="newPassword" type="password" required minLength={8}
+                <PasswordInput 
+                  id="newPassword" required minLength={8}
                   value={newPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                 />
               </div>

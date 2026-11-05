@@ -42,12 +42,22 @@ interface Student {
   groups: string[];
 }
 
+interface CsvImportResult {
+  total: number;
+  created: number;
+  failed: number;
+  results: { row: number; email: string; status: 'created' | 'failed'; reason?: string }[];
+}
+
+const CSV_BATCH_ROWS = 25;
+
 export function StudentManagement() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showGroupPanel, setShowGroupPanel] = useState<Student | null>(null);
-  const [csvResult, setCsvResult] = useState<any>(null);
+  const [csvResult, setCsvResult] = useState<CsvImportResult | null>(null);
+  const [csvProgress, setCsvProgress] = useState('');
   const csvRef = useRef<HTMLInputElement>(null);
 
   // Add student form state
@@ -109,19 +119,35 @@ export function StudentManagement() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
   });
 
+  // The API takes raw CSV text, at most CSV_BATCH_ROWS rows per request (each
+  // row is two Cognito calls, and a request must finish within 30 s), so
+  // larger files go up in batches that repeat the header row.
   const importCsv = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await apiClient.post('/admin/students/csv', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return res.data;
+    mutationFn: async (file: File): Promise<CsvImportResult> => {
+      const lines = (await file.text()).replace(/^\uFEFF/, '').split(/\r?\n/);
+      const header = lines[0] ?? '';
+      const rows = lines.slice(1).filter(l => l.trim());
+      const combined: CsvImportResult = { total: 0, created: 0, failed: 0, results: [] };
+      for (let start = 0; start < rows.length; start += CSV_BATCH_ROWS) {
+        const batch = rows.slice(start, start + CSV_BATCH_ROWS);
+        setCsvProgress(`Importing rows ${start + 1}–${start + batch.length} of ${rows.length}...`);
+        const res = await apiClient.post('/admin/students/csv', [header, ...batch].join('\n'), {
+          headers: { 'Content-Type': 'text/csv' },
+        });
+        const data = res.data as CsvImportResult;
+        combined.total += data.total;
+        combined.created += data.created;
+        combined.failed += data.failed;
+        // Backend numbers rows per batch — make them file-wide
+        combined.results.push(...data.results.map(r => ({ ...r, row: r.row + start })));
+      }
+      return combined;
     },
     onSuccess: (data) => {
       setCsvResult(data);
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
+    onSettled: () => setCsvProgress(''),
   });
 
   const filtered = (data ?? []).filter(s =>
@@ -167,15 +193,27 @@ export function StudentManagement() {
         </div>
       </div>
 
+      {csvProgress && <p className="text-sm text-muted-foreground">{csvProgress}</p>}
+      {importCsv.isError && (
+        <p className="text-sm font-medium text-destructive">CSV import stopped part-way — students already listed below were created; re-import only the missing rows.</p>
+      )}
+
       {/* CSV result */}
       {csvResult && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start justify-between gap-4">
           <div>
             <p className="font-medium text-sm">CSV Import Complete</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Imported {csvResult.imported}/{csvResult.total} students.
+              Imported {csvResult.created}/{csvResult.total} students.
               {csvResult.failed > 0 && <span className="text-warning ml-1">{csvResult.failed} failed.</span>}
             </p>
+            {csvResult.failed > 0 && (
+              <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                {csvResult.results.filter(r => r.status === 'failed').map(r => (
+                  <li key={r.row}>Row {r.row}{r.email ? ` (${r.email})` : ''}: {r.reason}</li>
+                ))}
+              </ul>
+            )}
           </div>
           <button onClick={() => setCsvResult(null)} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />

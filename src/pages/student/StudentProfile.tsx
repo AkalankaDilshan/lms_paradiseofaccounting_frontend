@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { PasswordInput } from '../../components/PasswordInput';
 import { Label } from '../../components/ui/label';
 import { Avatar } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
@@ -208,15 +209,15 @@ export function StudentProfile() {
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="pwOld">Current Password</Label>
-            <Input id="pwOld" type="password" value={pwOld} onChange={e => setPwOld(e.target.value)} className="h-10" />
+            <PasswordInput id="pwOld" value={pwOld} onChange={e => setPwOld(e.target.value)} className="h-10" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="pwNew">New Password</Label>
-            <Input id="pwNew" type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} className="h-10" />
+            <PasswordInput id="pwNew" value={pwNew} onChange={e => setPwNew(e.target.value)} className="h-10" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="pwConfirm">Confirm New Password</Label>
-            <Input id="pwConfirm" type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} className="h-10" />
+            <PasswordInput id="pwConfirm" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} className="h-10" />
           </div>
           {pwError && <p className="text-sm text-destructive">{pwError}</p>}
           {pwSuccess && <p className="text-sm text-success">{pwSuccess}</p>}

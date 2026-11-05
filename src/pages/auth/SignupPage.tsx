@@ -5,6 +5,7 @@ import { userPool } from '../../contexts/AuthContext';
 import { USE_MOCK } from '../../lib/cognito';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { PasswordInput } from '../../components/PasswordInput';
 import { Label } from '../../components/ui/label';
 
 // A/L batches currently in progress — update when a new batch starts and the
@@ -258,7 +259,7 @@ export function SignupPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" required minLength={8} value={formData.password} onChange={handleChange} className="h-11" />
+                  <PasswordInput id="password" required minLength={8} value={formData.password} onChange={handleChange} className="h-11" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

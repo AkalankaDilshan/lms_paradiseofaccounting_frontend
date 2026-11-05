@@ -15,7 +15,7 @@ interface PaymentRecord {
   userId: string;
   firstName: string;
   lastName: string;
-  group: string;
+  groups: string[];
   currentMonth: { status: 'paid' | 'pending' | 'overdue' | 'waived'; paidAt: string | null; amount: number };
   history: { month: string; status: string }[];
 }
@@ -68,7 +68,7 @@ export function PaymentsPage() {
       ['Name', 'Group', 'This Month', 'Paid At'],
       ...data.map(s => [
         `${s.firstName} ${s.lastName}`,
-        s.group,
+        s.groups.join(' / '),
         s.currentMonth.status,
         s.currentMonth.paidAt || '',
       ]),
@@ -193,7 +193,7 @@ export function PaymentsPage() {
                     <TableCell>
                       <p className="font-medium text-sm">{s.firstName} {s.lastName}</p>
                     </TableCell>
-                    <TableCell><GroupBadge group={s.group} /></TableCell>
+                    <TableCell><div className="flex flex-wrap gap-1">{s.groups.map(g => <GroupBadge key={g} group={g} />)}</div></TableCell>
                     <TableCell>
                       <Badge variant={st.variant} className="px-2 py-1">{st.label}</Badge>
                     </TableCell>

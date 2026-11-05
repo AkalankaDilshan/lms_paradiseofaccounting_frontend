@@ -10,6 +10,7 @@ import { Leaderboard } from '../../components/Leaderboard';
 interface QuestionResult {
   questionId: string;
   questionText: string;
+  imageKey?: string | null;
   options: { index: number; text: string }[];
   givenAnswerIndex: number | null;
   correctAnswerIndex: number;
@@ -120,6 +121,10 @@ export function QuizResults() {
                   <XCircle className="w-6 h-6 text-destructive shrink-0" />
                 )}
               </div>
+              {item.imageKey && (
+                <img src={item.imageKey} alt="" loading="lazy"
+                  className="mt-3 max-h-80 w-full rounded-md border border-white/10 object-contain" />
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">

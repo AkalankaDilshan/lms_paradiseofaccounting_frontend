@@ -296,8 +296,11 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   mock.onPost(/\/admin\/students\/[^/]+\/groups/).reply(200, { added: true });
   mock.onDelete(/\/admin\/students\/[^/]+\/groups\/[^/]+/).reply(200, { removed: true });
   mock.onPost('/admin/students/csv').reply(200, {
-    total: 5, imported: 4, failed: 1,
-    errors: [{ row: 3, error: 'Invalid email format' }],
+    total: 2, created: 1, failed: 1,
+    results: [
+      { row: 1, email: 'new.student@example.com', status: 'created' },
+      { row: 2, email: 'bad@example.com', status: 'failed', reason: 'Invalid phone number: 12' },
+    ],
   });
 
   // ============================================================
@@ -344,7 +347,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
   mock.onGet('/payments').reply(200, {
     items: [
       {
-        userId: 'u1', firstName: 'Kasun', lastName: 'Perera', group: '2027-HATTON',
+        userId: 'u1', firstName: 'Kasun', lastName: 'Perera', groups: ['2027-HATTON'],
         currentMonth: { status: 'paid', paidAt: '2026-09-05T10:00:00Z', amount: 2500 },
         history: [
           { month: '2026-09', status: 'paid' },
@@ -353,7 +356,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         ]
       },
       {
-        userId: 'u2', firstName: 'Nimal', lastName: 'Silva', group: '2027-NAWALAPITIYA',
+        userId: 'u2', firstName: 'Nimal', lastName: 'Silva', groups: ['2027-NAWALAPITIYA'],
         currentMonth: { status: 'pending', paidAt: null, amount: 2500 },
         history: [
           { month: '2026-09', status: 'pending' },
@@ -362,7 +365,7 @@ export const setupMockAdapter = (axiosInstance: AxiosInstance) => {
         ]
       },
       {
-        userId: 'u3', firstName: 'Sanduni', lastName: 'Fernando', group: '2028-GINIGATHHENA',
+        userId: 'u3', firstName: 'Sanduni', lastName: 'Fernando', groups: ['2028-GINIGATHHENA'],
         currentMonth: { status: 'overdue', paidAt: null, amount: 2500 },
         history: [
           { month: '2026-09', status: 'overdue' },

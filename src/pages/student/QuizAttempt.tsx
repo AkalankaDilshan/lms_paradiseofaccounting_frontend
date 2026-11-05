@@ -32,6 +32,7 @@ import { cn } from 'cn';
 interface Question {
   questionId: string;
   questionText: string;
+  imageKey?: string | null;
   options: { index: number; text: string }[];
 }
 
@@ -43,14 +44,15 @@ interface AttemptData {
   // more than a couple of minutes after it are rejected as expired
   expiresAt?: string;
   questions: Question[];
+  // Server-side autosave from this or another device (POST /attempts resumes the open attempt)
+  savedAnswers?: Record<string, number>;
 }
 
-// Autosave: persisted client-side per quiz so a dropped connection or accidental
-// reload doesn't lose progress or reset the countdown. There is no backend
-// partial-save route — PUT /attempts/:id is a one-shot final submit that grades
-// and locks the attempt — so resuming means skipping the POST /attempts call
-// (which would otherwise mint a brand-new attempt, burn a maxAttempts slot, and
-// reshuffle question/option order) and restoring everything from localStorage.
+// Progress is kept in two places. The server holds the attempt itself (POST
+// /attempts returns the open attempt instead of starting a new one) plus
+// autosaved draft answers (PUT /attempts/:id/answers), so a student can carry
+// on from another phone or after clearing the browser. localStorage keeps this
+// device's newest answers, flags and position, and lets a reload work offline.
 interface PersistedAttempt extends AttemptData {
   answers: Record<string, number>;
   flaggedIds: string[];
@@ -115,15 +117,27 @@ export function QuizAttempt() {
     queryKey: ['attempt', quizId],
     queryFn: async () => {
       const persisted = readPersistedAttempt(quizId);
-      if (persisted) return persisted;
 
-      const res = await apiClient.post(`/quizzes/${quizId}/attempts`);
+      let server: AttemptData;
+      try {
+        server = (await apiClient.post(`/quizzes/${quizId}/attempts`)).data as AttemptData;
+      } catch (err) {
+        // Offline (no response at all): carry on from this device's copy
+        if (persisted && isAxiosError(err) && !err.response) return persisted;
+        throw err;
+      }
+
+      // Same attempt on this device: its answers are the newest; otherwise
+      // (another device, cleared storage) start from the server's autosave
+      const sameAttempt = persisted?.attemptId === server.attemptId;
       const fresh: PersistedAttempt = {
-        ...(res.data as AttemptData),
-        answers: {},
-        flaggedIds: [],
-        currentIndex: 0,
-        startedAtMs: Date.now(),
+        ...server,
+        answers: sameAttempt
+          ? { ...(server.savedAnswers ?? {}), ...persisted!.answers }
+          : (server.savedAnswers ?? {}),
+        flaggedIds: sameAttempt ? persisted!.flaggedIds : [],
+        currentIndex: sameAttempt ? persisted!.currentIndex : 0,
+        startedAtMs: sameAttempt ? persisted!.startedAtMs : Date.now(),
       };
       writePersistedAttempt(quizId, fresh);
       return fresh;
@@ -158,6 +172,21 @@ export function QuizAttempt() {
       currentIndex,
     });
   }, [answers, flagged, currentIndex, data, quizId]);
+
+  // Server autosave — debounced, best-effort. If it fails (offline) the answers
+  // are still in localStorage and travel with the next save or the final submit.
+  const lastSavedAnswers = useRef('');
+  useEffect(() => {
+    if (!data || hydratedAttemptId.current !== data.attemptId) return;
+    const snapshot = JSON.stringify(answers);
+    if (snapshot === lastSavedAnswers.current) return;
+    const timer = setTimeout(() => {
+      apiClient.put(`/quizzes/${quizId}/attempts/${data.attemptId}/answers`, { answersGiven: answers })
+        .then(() => { lastSavedAnswers.current = snapshot; })
+        .catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [answers, data, quizId]);
 
   // Timer countdown
   useEffect(() => {
@@ -416,6 +445,10 @@ export function QuizAttempt() {
               </CardAction>
             </CardHeader>
             <CardContent>
+              {question.imageKey && (
+                <img src={question.imageKey} alt="" loading="lazy"
+                  className="mb-4 max-h-80 w-full rounded-md border border-white/10 object-contain" />
+              )}
               <RadioGroup
                 value={answers[question.questionId] !== undefined ? String(answers[question.questionId]) : ''}
                 onValueChange={(val: string) => setAnswers(prev => ({ ...prev, [question.questionId]: Number(val) }))}
