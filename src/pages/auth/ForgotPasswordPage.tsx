@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CognitoUser } from 'amazon-cognito-identity-js';
 import { userPool } from '../../contexts/AuthContext';
+import { USE_MOCK } from '../../lib/cognito';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -21,7 +22,7 @@ export function ForgotPasswordPage() {
     setError('');
     setLoading(true);
 
-    if (import.meta.env.VITE_USE_MOCK) {
+    if (USE_MOCK) {
       setTimeout(() => {
         setStep(2);
         setLoading(false);
@@ -53,7 +54,7 @@ export function ForgotPasswordPage() {
     setError('');
     setLoading(true);
 
-    if (import.meta.env.VITE_USE_MOCK) {
+    if (USE_MOCK) {
       setTimeout(() => {
         navigate('/login');
       }, 500);

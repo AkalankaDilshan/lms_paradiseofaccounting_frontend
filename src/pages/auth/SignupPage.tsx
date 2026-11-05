@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { CognitoUserAttribute } from 'amazon-cognito-identity-js';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CognitoUser, CognitoUserAttribute } from 'amazon-cognito-identity-js';
 import { userPool } from '../../contexts/AuthContext';
+import { USE_MOCK } from '../../lib/cognito';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -37,6 +38,12 @@ export function SignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Email awaiting its Cognito verification code. Set after signUp, or from
+  // /signup?verify=<email> when LoginPage hits an unconfirmed account.
+  const [searchParams] = useSearchParams();
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(searchParams.get('verify'));
+  const [code, setCode] = useState('');
+  const [info, setInfo] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Android PWA Install logic
@@ -65,7 +72,7 @@ export function SignupPage() {
     setError('');
     setLoading(true);
 
-    if (import.meta.env.VITE_USE_MOCK) {
+    if (USE_MOCK) {
       setTimeout(() => {
         setSuccess(true);
         setLoading(false);
@@ -99,8 +106,38 @@ export function SignupPage() {
         setError(err.message || 'Signup failed');
         return;
       }
-      setSuccess(true);
+      setVerifyEmail(formData.email);
     });
+  };
+
+  // Confirming fires the PostConfirmation trigger, which creates the pending USER# record
+  const handleConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userPool || !verifyEmail) return;
+    setError('');
+    setInfo('');
+    setLoading(true);
+    new CognitoUser({ Username: verifyEmail, Pool: userPool })
+      .confirmRegistration(code.trim(), true, (err) => {
+        setLoading(false);
+        if (err) {
+          setError(err.message || 'Verification failed');
+          return;
+        }
+        setVerifyEmail(null);
+        setSuccess(true);
+      });
+  };
+
+  const handleResend = () => {
+    if (!userPool || !verifyEmail) return;
+    setError('');
+    setInfo('');
+    new CognitoUser({ Username: verifyEmail, Pool: userPool })
+      .resendConfirmationCode((err) => {
+        if (err) setError(err.message || 'Could not resend the code');
+        else setInfo(`A new code was sent to ${verifyEmail}.`);
+      });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -131,9 +168,9 @@ export function SignupPage() {
               <div className="mx-auto bg-success/10 p-3 rounded-full mb-6 w-16 h-16 flex items-center justify-center">
                 <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">Account Created!</h1>
+              <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">Email Verified!</h1>
               <p className="text-muted-foreground mb-2 text-center">
-                Please check your email to verify your account before logging in.
+                Your account is created and you can now log in.
               </p>
               <p className="text-muted-foreground mb-8 text-center">
                 After that, a SuperAdmin or TA still needs to approve you as an enrolled student —
@@ -164,6 +201,36 @@ export function SignupPage() {
               <Link to="/login">
                 <Button variant="outline" className="w-full h-11">Go to Login</Button>
               </Link>
+            </>
+          ) : verifyEmail ? (
+            <>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Verify your email</h1>
+              <p className="text-muted-foreground mb-8">
+                We sent a 6-digit code to <span className="font-medium text-foreground">{verifyEmail}</span>.
+                Enter it below to activate your account. Check your spam folder if it hasn't arrived.
+              </p>
+
+              <form onSubmit={handleConfirm} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="code">Verification Code</Label>
+                  <Input id="code" required inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                    placeholder="123456" value={code} onChange={e => setCode(e.target.value)} className="h-11 tracking-widest" />
+                </div>
+
+                {error && <div className="text-sm font-medium text-destructive">{error}</div>}
+                {info && <div className="text-sm font-medium text-success">{info}</div>}
+
+                <Button type="submit" className="w-full h-11" disabled={loading}>
+                  {loading ? 'Verifying...' : 'Verify Email'}
+                </Button>
+              </form>
+
+              <p className="mt-6 text-sm text-muted-foreground text-center">
+                Didn't get it?{' '}
+                <button type="button" onClick={handleResend} className="font-medium text-primary hover:underline">
+                  Resend code
+                </button>
+              </p>
             </>
           ) : (
             <>

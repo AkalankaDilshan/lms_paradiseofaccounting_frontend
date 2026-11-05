@@ -1,13 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { CognitoUserPool, CognitoUserSession } from 'amazon-cognito-identity-js';
+import { CognitoUserSession } from 'amazon-cognito-identity-js';
+import { USE_MOCK, userPool } from '../lib/cognito';
 
-const poolData = {
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || 'dummy-pool',
-  ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID || 'dummy-client',
-};
-const hasCognitoConfig = Boolean(import.meta.env.VITE_COGNITO_USER_POOL_ID && import.meta.env.VITE_COGNITO_CLIENT_ID);
-export const userPool = hasCognitoConfig ? new CognitoUserPool(poolData) : null;
+export { userPool };
 
 export type UserRole = 'Student' | 'TA' | 'SuperAdmin' | null;
 export type DemoRole = 'Student' | 'TA';
@@ -77,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const token = session.getIdToken().getJwtToken();
         const payload = session.getIdToken().decodePayload();
-        const role = (payload['cognito:groups']?.[0] as User['role']) || (import.meta.env.VITE_USE_MOCK ? 'Student' : null);
+        const role = (payload['cognito:groups']?.[0] as User['role']) || (USE_MOCK ? 'Student' : null);
         setUser({ username: cognitoUser.getUsername(), sub: payload.sub || '', email: (payload.email as string) || '', role });
         setIdToken(token);
         setIsLoading(false);
@@ -85,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!hasCognitoConfig || import.meta.env.VITE_API_BASE_URL?.includes('localhost')) {
+    if (USE_MOCK) {
       if (localStorage.getItem(SIGNED_OUT_KEY) === '1') {
         setUser(null);
         setIdToken(null);
@@ -132,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = () => {
     userPool?.getCurrentUser()?.signOut();
-    if (!hasCognitoConfig) localStorage.setItem(SIGNED_OUT_KEY, '1');
+    if (USE_MOCK) localStorage.setItem(SIGNED_OUT_KEY, '1');
     setUser(null);
     setIdToken(null);
   };
@@ -151,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        isDemo: !hasCognitoConfig,
+        isDemo: USE_MOCK,
         idToken,
         signOut,
         refreshSession: fetchSession,

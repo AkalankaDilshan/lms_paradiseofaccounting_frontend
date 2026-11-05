@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
 import { userPool, useAuth } from '../../contexts/AuthContext';
+import { USE_MOCK } from '../../lib/cognito';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -28,7 +29,7 @@ export function LoginPage() {
     setError('');
     setLoading(true);
 
-    if (import.meta.env.VITE_USE_MOCK || isDemo) {
+    if (USE_MOCK) {
       enterDemo('TA');
       return;
     }
@@ -69,6 +70,11 @@ export function LoginPage() {
         });
       },
       onFailure: (err) => {
+        // Signed up but never entered the emailed code — finish verification first
+        if (err.code === 'UserNotConfirmedException') {
+          navigate(`/signup?verify=${encodeURIComponent(email)}`);
+          return;
+        }
         setError(err.message || 'Login failed');
         setLoading(false);
       },
