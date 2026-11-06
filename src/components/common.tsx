@@ -132,13 +132,13 @@ export function StatCard({
       onKeyDown={onClick ? (e) => (e.key === 'Enter' || e.key === ' ') && onClick() : undefined}
     >
       <CardContent className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <span className={cn('flex size-8 items-center justify-center rounded-lg', toneClasses[tone])}>
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-xs text-muted-foreground sm:text-sm">{label}</p>
+          <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-8', toneClasses[tone])}>
             <Icon className="size-4" />
           </span>
         </div>
-        <p className="text-3xl font-semibold tracking-tight">
+        <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {value === null || value === undefined ? (
             <span className="text-muted-foreground">—</span>
           ) : (
@@ -155,7 +155,7 @@ export function StatCard({
             />
           </div>
         )}
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+        {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );

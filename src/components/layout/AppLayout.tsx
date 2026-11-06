@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import {
@@ -32,7 +32,9 @@ import { Button, buttonVariants } from '../ui/button';
 import { Input } from '../ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { NotificationBell } from './NotificationBell';
+import { StudentTabBar } from './StudentTabBar';
 import { ErrorBoundary } from '../feedback/ErrorBoundary';
+import { PageSkeleton } from '../common';
 import { cn } from '../../lib/utils';
 
 interface NavItem {
@@ -132,6 +134,8 @@ export function AppLayout() {
   const displayName = user?.name || user?.username || (isStudent ? 'Student' : 'Teacher');
   const settingsPath = isStudent ? '/student/profile' : '/teacher/settings';
   const closeMobile = () => setMobileOpen(false);
+  // Sitting a quiz is a focus mode: no tab bar to mis-tap
+  const showTabBar = isStudent && !/\/student\/quizzes\/[^/]+\/attempt/.test(location.pathname);
 
   const filteredGroups = useMemo(() => {
     const groups = (isStudent ? studentNav : teacherNav)
@@ -331,9 +335,28 @@ export function AppLayout() {
         </AnimatePresence>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/75 px-3 backdrop-blur-xl md:px-5">
+          <header className="safe-top sticky top-0 z-30 border-b border-border bg-background/75 backdrop-blur-xl">
+            <div className="flex h-14 items-center gap-2 px-3 md:px-5">
+            {/* Students on phones navigate with the bottom tab bar; the header shows the app + page name */}
+            {isStudent && (
+              <div className="flex min-w-0 items-center gap-2.5 lg:hidden">
+                <img src="/logoIcon.png" alt="" className="size-8 rounded-lg ring-1 ring-border" />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={pageName}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="truncate text-[15px] font-semibold tracking-tight"
+                  >
+                    {pageName}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+            )}
             <button
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden"
+              className={cn('rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden', isStudent && 'hidden')}
               onClick={() => setMobileOpen(true)}
               aria-label="Open navigation"
               aria-expanded={mobileOpen}
@@ -351,7 +374,7 @@ export function AppLayout() {
               {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
             </button>
 
-            <nav className="hidden min-w-0 items-center gap-1 text-sm text-muted-foreground sm:flex">
+            <nav className={cn('hidden min-w-0 items-center gap-1 text-sm text-muted-foreground sm:flex', isStudent && 'sm:hidden lg:flex')}>
               <span>{isStudent ? 'Student' : 'Teacher'}</span>
               <ChevronRight className="size-3.5 shrink-0" />
               <AnimatePresence mode="wait" initial={false}>
@@ -369,7 +392,9 @@ export function AppLayout() {
             </nav>
 
             <div className="ml-auto flex min-w-0 items-center gap-1.5">
-              <ThemeToggle />
+              <span className={cn(isStudent && 'hidden lg:inline-flex')}>
+                <ThemeToggle />
+              </span>
               <NotificationBell />
               <Popover>
                 <PopoverTrigger className={cn(buttonVariants({ variant: 'ghost' }), 'h-8 gap-2 px-1.5')}>
@@ -402,6 +427,7 @@ export function AppLayout() {
                 </PopoverContent>
               </Popover>
             </div>
+            </div>
           </header>
           {/* Keyed on the path so each page fades in; no exit animation, since
               <Outlet /> would already render the next page while exiting */}
@@ -410,13 +436,17 @@ export function AppLayout() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6"
+            className={cn('mx-auto w-full max-w-[1440px] flex-1 p-4 md:p-6', showTabBar && 'pb-tabbar lg:pb-6')}
           >
             <ErrorBoundary resetKey={location.pathname}>
-              <Outlet />
+              {/* Keeps the sidebar/header on screen while a page chunk downloads */}
+              <Suspense fallback={<PageSkeleton />}>
+                <Outlet />
+              </Suspense>
             </ErrorBoundary>
           </motion.div>
         </main>
+        {showTabBar && <StudentTabBar />}
       </div>
     </MotionConfig>
   );

@@ -72,6 +72,8 @@ export interface StaffUser {
 }
 
 export interface Overview {
+  /** When the server computed these numbers (cached up to 5 minutes) */
+  cachedAt?: string;
   students: { total: number; active: number; pending: number; suspended: number };
   quizzes: { total: number; open: number; upcoming: number };
   attempts: {

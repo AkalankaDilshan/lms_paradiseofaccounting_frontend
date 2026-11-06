@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Upload, UserPlus, Search, Users, X, Plus, Download, RotateCcw, Ban, Check } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -63,6 +64,14 @@ export function StudentManagement() {
   const isSuperAdmin = user?.role === 'SuperAdmin';
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
+  // Approve dialog — the group is pre-filled from the student's signup (exam year + center)
+  const [approving, setApproving] = useState<Student | null>(null);
+  const [approveGroup, setApproveGroup] = useState('');
+  const openApprove = (student: Student) => {
+    const suggested = `${student.examYear}-${student.center}`;
+    setApproveGroup(GROUPS.includes(suggested) ? suggested : '');
+    setApproving(student);
+  };
   const [showAddModal, setShowAddModal] = useState(false);
   const [showGroupPanel, setShowGroupPanel] = useState<Student | null>(null);
   const [csvResult, setCsvResult] = useState<CsvImportResult | null>(null);
@@ -144,10 +153,13 @@ export function StudentManagement() {
   // them to active so their next session refresh unlocks full access.
   const approveStudent = useMutation({
     meta: { errorContext: 'approve the student', successMessage: 'Student approved', successDetail: 'They get full access the next time they sign in.' },
-    mutationFn: async (userId: string) => {
-      await apiClient.post(`/admin/students/${userId}/approve`);
+    mutationFn: async ({ userId, groupId }: { userId: string; groupId: string }) => {
+      await apiClient.post(`/admin/students/${userId}/approve`, groupId ? { groupId } : {});
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
+    onSuccess: () => {
+      setApproving(null);
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
   });
 
   const addGroupMutation = useMutation({
@@ -363,7 +375,7 @@ export function StudentManagement() {
                       <div className="flex justify-end gap-1">
                         {student.status === 'pending' && (
                           <Button variant="ghost" size="sm" className="text-success hover:text-success"
-                            onClick={() => approveStudent.mutate(student.userId)}
+                            onClick={() => openApprove(student)}
                             disabled={approveStudent.isPending}>
                             <Check /> Approve
                           </Button>
@@ -472,6 +484,44 @@ export function StudentManagement() {
           </motion.div>
         </div>
       )}
+
+      {/* Approve + assign group */}
+      <Dialog open={!!approving} onOpenChange={(o) => { if (!o) setApproving(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approve {approving?.firstName} {approving?.lastName}</DialogTitle>
+            <DialogDescription>
+              They get full access the next time they sign in. Pick their class group so they see the right quizzes and materials.
+            </DialogDescription>
+          </DialogHeader>
+          {approving && (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-muted/50 p-3 text-sm">
+                <p className="font-medium">{approving.email}</p>
+                <p className="text-muted-foreground">
+                  {[approving.school, approving.examYear ? `A/L ${approving.examYear}` : '', approving.center].filter(Boolean).join(' · ') || 'No details given at signup'}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="approve-group">Class group</Label>
+                <select id="approve-group" value={approveGroup} onChange={(e) => setApproveGroup(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30">
+                  <option value="">No group yet (assign later)</option>
+                  {GROUPS.map((g) => <option key={g} value={g}>{g}{g === `${approving.examYear}-${approving.center}` ? ' — matches signup' : ''}</option>)}
+                </select>
+                {approveGroup && <div className="pt-1"><GroupBadge group={approveGroup} /></div>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>Cancel</Button>
+            <Button className="bg-success text-white hover:bg-success/90" disabled={approveStudent.isPending}
+              onClick={() => approving && approveStudent.mutate({ userId: approving.userId, groupId: approveGroup })}>
+              <Check /> {approveStudent.isPending ? 'Approving…' : approveGroup ? `Approve & add to ${approveGroup}` : 'Approve'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Group Management Side Panel */}
       {showGroupPanel && (

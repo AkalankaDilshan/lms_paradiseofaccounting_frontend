@@ -79,7 +79,7 @@ export function StudentQuizCard({ quiz, compact = false }: { quiz: StudentQuiz; 
             </div>
           )}
           <Button
-            className="ml-auto"
+            className="h-10 flex-1 sm:ml-auto sm:h-8 sm:flex-none"
             variant={action.kind === 'start' || action.kind === 'resume' ? 'default' : 'outline'}
             disabled={action.kind === 'none'}
             onClick={go}

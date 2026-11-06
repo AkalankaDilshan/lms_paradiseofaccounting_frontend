@@ -29,6 +29,7 @@ import { Sparkline } from '../../components/dashboard/sparkline';
 import { GroupBadge } from '../../components/GroupBadge';
 import { Leaderboard } from '../../components/Leaderboard';
 import { StudentQuizCard } from '../../components/quiz/StudentQuizCard';
+import { InstallAppCard } from '../../components/InstallAppCard';
 import { cn } from '../../lib/utils';
 
 const FILE_ICONS: Record<string, typeof FileText> = { pdf: FileText, image: FileImage, doc: File };
@@ -98,14 +99,14 @@ export function StudentDashboard() {
         initial={{ opacity: 0, scale: 0.985 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 md:p-8"
+        className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 sm:p-6 md:p-8"
       >
         <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-primary/20 blur-3xl animate-float" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 size-56 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-end md:gap-6">
           <div>
-            <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM yyyy')}</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">
+            <p className="text-xs text-muted-foreground sm:text-sm">{format(new Date(), 'EEEE, d MMMM yyyy')}</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
               {greeting()}, {firstName}.
             </h1>
             <p className="mt-2 max-w-lg text-sm text-muted-foreground">
@@ -129,6 +130,34 @@ export function StudentDashboard() {
         </div>
       </motion.section>
 
+      <InstallAppCard />
+
+      {/* Up next — the first thing a student needs on their phone */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Up next</h2>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/student/quizzes')}>
+            All quizzes <ArrowUpRight />
+          </Button>
+        </div>
+        {actionable.length === 0 ? (
+          <Card className="py-0">
+            <EmptyState
+              icon={ClipboardList}
+              className="py-8"
+              title="No quizzes waiting for you"
+              description={upcoming[0] ? `Next: “${upcoming[0].title}” opens ${formatDistanceToNow(new Date(upcoming[0].openAt), { addSuffix: true })}.` : 'New quizzes will appear here when they open.'}
+            />
+          </Card>
+        ) : (
+          <div className="stagger grid gap-3">
+            {actionable.slice(0, 3).map((q) => (
+              <StudentQuizCard key={q.quizId} quiz={q} />
+            ))}
+          </div>
+        )}
+      </div>
+
       {pinned.length > 0 && (
         <section className="stagger grid gap-3 sm:grid-cols-2">
           {pinned.map((a) => (
@@ -148,7 +177,7 @@ export function StudentDashboard() {
       )}
 
       {/* KPIs */}
-      <section className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Average score"
           icon={Target}
@@ -157,7 +186,7 @@ export function StudentDashboard() {
           suffix="%"
           tone="primary"
           progress={stats.average}
-          hint={stats.average === null ? 'Take a quiz to see your average' : 'Across all your submitted attempts'}
+          hint={stats.average === null ? 'Take a quiz to see it' : 'All your attempts'}
         />
         <StatCard
           label="Quizzes completed"
@@ -165,9 +194,9 @@ export function StudentDashboard() {
           value={stats.completed}
           tone="success"
           progress={stats.assigned ? (stats.completed / stats.assigned) * 100 : null}
-          hint={`of ${stats.assigned} assigned so far`}
+          hint={`of ${stats.assigned} assigned`}
         />
-        <StatCard label="Best score" icon={Award} value={stats.best} decimals={1} suffix="%" tone="accent" hint="Your personal best" />
+        <StatCard label="Best score" icon={Award} value={stats.best} decimals={1} suffix="%" tone="accent" hint="Personal best" />
         <Card className="py-4">
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between">
@@ -176,13 +205,13 @@ export function StudentDashboard() {
                 <Flame className="size-4" />
               </span>
             </div>
-            <p className={cn('text-3xl font-semibold tracking-tight tabular-nums', stats.momentum === null ? 'text-muted-foreground' : stats.momentum >= 0 ? 'text-success' : 'text-destructive')}>
+            <p className={cn('text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl', stats.momentum === null ? 'text-muted-foreground' : stats.momentum >= 0 ? 'text-success' : 'text-destructive')}>
               {stats.momentum === null ? '—' : `${stats.momentum > 0 ? '+' : ''}${stats.momentum}%`}
             </p>
             {stats.spark.length > 1 ? (
               <Sparkline data={stats.spark} color="hsl(var(--primary))" className="h-8" />
             ) : (
-              <p className="text-xs text-muted-foreground">Last 3 quizzes vs the 3 before</p>
+              <p className="text-xs text-muted-foreground">Last 3 vs previous 3</p>
             )}
           </CardContent>
         </Card>
@@ -190,31 +219,6 @@ export function StudentDashboard() {
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
-          {/* Up next */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">Up next</h2>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/student/quizzes')}>
-                All quizzes <ArrowUpRight />
-              </Button>
-            </div>
-            {actionable.length === 0 ? (
-              <Card className="py-0">
-                <EmptyState
-                  icon={ClipboardList}
-                  title="No quizzes waiting for you"
-                  description={upcoming[0] ? `Next: “${upcoming[0].title}” opens ${formatDistanceToNow(new Date(upcoming[0].openAt), { addSuffix: true })}.` : 'New quizzes will appear here when they open.'}
-                />
-              </Card>
-            ) : (
-              <div className="stagger grid gap-3">
-                {actionable.slice(0, 3).map((q) => (
-                  <StudentQuizCard key={q.quizId} quiz={q} />
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Recent attempts */}
           <Card className="gap-0 py-0">
             <CardHeader className="flex flex-row items-center justify-between border-b border-border py-4">

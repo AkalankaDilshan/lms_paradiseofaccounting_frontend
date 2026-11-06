@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Megaphone,
   PenSquare,
+  RefreshCw,
   Send,
   Target,
   UserPlus,
@@ -54,6 +55,21 @@ export function TeacherDashboard() {
   const [postTitle, setPostTitle] = useState('');
   const [postBody, setPostBody] = useState('');
   const [posting, setPosting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // The overview is cached server-side for 5 minutes; this forces a recount
+  const refreshOverview = async () => {
+    setRefreshing(true);
+    try {
+      const fresh = (await apiClient.get('/analytics/overview', { params: { refresh: 1 } })).data;
+      queryClient.setQueryData(['overview'], fresh);
+      toast.success('Dashboard updated', 'Numbers recalculated just now.');
+    } catch (err) {
+      notifyError(err, 'refresh the dashboard');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const payment = useMemo(() => {
     const rows = payments ?? [];
@@ -105,6 +121,12 @@ export function TeacherDashboard() {
         description="How the class is doing, at a glance."
         actions={
           <>
+            <Button variant="ghost" onClick={refreshOverview} disabled={refreshing} title="Recalculate now">
+              <RefreshCw className={cn(refreshing && 'animate-spin')} />
+              <span className="text-xs text-muted-foreground">
+                {overview?.cachedAt ? `Updated ${formatDistanceToNow(new Date(overview.cachedAt), { addSuffix: true })}` : 'Refresh'}
+              </span>
+            </Button>
             <Button variant="outline" onClick={() => navigate('/teacher/students')}>
               <Users /> Students
             </Button>

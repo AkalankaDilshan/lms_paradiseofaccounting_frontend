@@ -244,3 +244,32 @@
 .toast-progress {
   animation: toast-progress linear forwards;
 }
+
+/* ── Mobile / installed-app polish ───────────────────────────────────────── */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    /* no pull-to-refresh bounce revealing a white page in the installed app */
+    overscroll-behavior-y: none;
+  }
+  /* iOS zooms into any field with text under 16px — keep fields at 16px on phones */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+}
+
+/* Room for the bottom tab bar + the phone's home indicator. Declared as
+   Tailwind utilities so responsive variants (lg:pb-6) still win. */
+@utility pb-tabbar {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5.5rem);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}

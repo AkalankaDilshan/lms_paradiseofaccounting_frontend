@@ -13,7 +13,7 @@ type Tab = 'open' | 'upcoming' | 'past';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'open', label: 'Open now' },
   { id: 'upcoming', label: 'Upcoming' },
-  { id: 'past', label: 'Past & results' },
+  { id: 'past', label: 'Past' },
 ];
 
 const EMPTY: Record<Tab, { title: string; description: string; icon: typeof ClipboardList }> = {
@@ -57,14 +57,14 @@ export function StudentQuizzes() {
       <PageHeader eyebrow="Quizzes" title="My quizzes" description="Everything assigned to your class: open now, coming up, and past results." />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex w-fit rounded-xl border border-border bg-muted/40 p-1">
+        <div className="grid w-full grid-cols-3 rounded-xl border border-border bg-muted/40 p-1 sm:inline-flex sm:w-fit">
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
               className={cn(
-                'relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                'relative rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:py-1.5 sm:text-sm',
                 active === t.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -75,7 +75,7 @@ export function StudentQuizzes() {
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                 />
               )}
-              <span className="relative inline-flex items-center gap-1.5">
+              <span className="relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
                 {t.label}
                 <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">{counts[t.id]}</span>
               </span>

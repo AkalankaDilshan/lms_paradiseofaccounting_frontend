@@ -92,6 +92,9 @@ export const toast = {
   info: (title: string, message?: string) => push('info', title, message),
   warning: (title: string, message?: string) => push('warning', title, message),
   error: (title: string, message?: string, action?: Toast['action']) => push('error', title, message, { action }),
+  /** A toast with a button; `sticky` keeps it until the user acts or closes it */
+  withAction: (tone: Tone, title: string, message: string | undefined, action: NonNullable<Toast['action']>, sticky = false) =>
+    push(tone, title, message, { action, duration: sticky ? 0 : undefined }),
   dismiss: (id: number) => set({ toasts: state.toasts.filter((t) => t.id !== id) }),
 };
 

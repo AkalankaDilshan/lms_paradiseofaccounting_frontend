@@ -293,14 +293,14 @@ export function QuizAttempt() {
 
   if (phase === 'review') {
     return (
-      <div className="max-w-2xl mx-auto space-y-5 pb-24">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur pt-4 pb-3 border-b space-y-1">
+      <div className="max-w-2xl mx-auto space-y-5">
+        <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 bg-background/95 px-4 backdrop-blur md:-mx-6 md:px-6 pt-3 pb-3 border-b space-y-1">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Review your attempt</h1>
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-lg font-bold
+            <h1 className="text-base font-semibold sm:text-xl">Review your attempt</h1>
+            <div role="timer" aria-live="off" className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-base font-bold sm:text-lg
               ${isDanger ? 'bg-destructive/10 text-destructive animate-pulse' :
                 isWarning ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
-              <Clock className="w-5 h-5" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
             </div>
           </div>
@@ -352,16 +352,17 @@ export function QuizAttempt() {
           </Table>
         </Card>
 
-        <div className="flex items-center justify-between gap-3">
-          <Button variant="outline" onClick={() => setPhase('attempt')}>
-            <ChevronLeft className="w-4 h-4" /> Back to attempt
+        <div className="sticky bottom-0 z-20 -mx-4 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur md:-mx-6 md:px-6">
+          <Button variant="outline" size="lg" className="h-11" onClick={() => setPhase('attempt')}>
+            <ChevronLeft className="w-4 h-4" /> Back
           </Button>
           <Button
+            className="h-11 flex-1 sm:flex-none"
             size="lg"
             onClick={() => submitAttempt.mutate()}
             disabled={submitAttempt.isPending}
           >
-            {submitAttempt.isPending ? 'Submitting...' : 'Submit all and finish'}
+            {submitAttempt.isPending ? 'Submitting…' : 'Submit and finish'}
           </Button>
         </div>
       </div>
@@ -369,15 +370,15 @@ export function QuizAttempt() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 pb-24">
+    <div className="max-w-2xl mx-auto space-y-5">
       {/* Sticky Header with Timer + Navigator */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur pt-4 pb-3 border-b space-y-3">
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 bg-background/95 px-4 backdrop-blur md:-mx-6 md:px-6 pt-3 pb-3 border-b space-y-2.5">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold line-clamp-1">Quiz in Progress</h1>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-lg font-bold
+          <h1 className="text-base font-semibold line-clamp-1 sm:text-xl">Quiz in progress</h1>
+          <div role="timer" aria-live="off" className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-base font-bold sm:text-lg
             ${isDanger ? 'bg-destructive/10 text-destructive animate-pulse' :
               isWarning ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
-            <Clock className="w-5 h-5" />
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             {timeLeft !== null ? formatTime(timeLeft) : '--:--'}
           </div>
         </div>
@@ -393,8 +394,15 @@ export function QuizAttempt() {
         )}
         {submitFailedBanner}
 
+        <div className="h-1 overflow-hidden rounded-full bg-muted">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            animate={{ width: `${totalQuestions ? (answeredCount / totalQuestions) * 100 : 0}%` }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+          />
+        </div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground sm:text-sm">
             Question <span className="font-medium text-foreground">{safeIndex + 1}</span> of {totalQuestions}
             <span className="mx-1.5 text-border">·</span>
             {answeredCount} answered
@@ -403,7 +411,7 @@ export function QuizAttempt() {
             <Sheet open={navigatorOpen} onOpenChange={setNavigatorOpen}>
               <SheetTrigger render={<Button variant="outline" size="sm" />}>
                 <LayoutGrid className="w-4 h-4" />
-                Questions
+                <span className="hidden sm:inline">Questions</span>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
@@ -428,7 +436,7 @@ export function QuizAttempt() {
               size="sm"
               onClick={() => setPhase('review')}
             >
-              Finish attempt
+              Finish
             </Button>
           </div>
         </div>
@@ -438,10 +446,22 @@ export function QuizAttempt() {
       <AnimatePresence mode="wait">
         <motion.div
           key={question.questionId}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.15 }}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -24 }}
+          transition={{ duration: 0.18 }}
+          // Swipe left/right to move between questions on a phone
+          drag="x"
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.18}
+          onDragEnd={(_, info) => {
+            const swipe = Math.abs(info.offset.x) > 90 || Math.abs(info.velocity.x) > 500;
+            if (!swipe) return;
+            if (info.offset.x < 0 && !isLastQuestion) goTo(safeIndex + 1);
+            if (info.offset.x > 0 && safeIndex > 0) goTo(safeIndex - 1);
+          }}
+          className="touch-pan-y"
         >
           <Card>
             <CardHeader>
@@ -474,7 +494,12 @@ export function QuizAttempt() {
                 className="space-y-3"
               >
                 {question.options.map((opt) => (
-                  <div key={opt.index} className="flex items-start space-x-3 space-y-0 p-3 rounded-md border hover:bg-muted/50 transition-colors cursor-pointer"
+                  <div key={opt.index} className={cn(
+                      'flex min-h-12 items-start space-x-3 space-y-0 rounded-xl border p-3.5 transition-all cursor-pointer active:scale-[0.99]',
+                      answers[question.questionId] === opt.index
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                        : 'hover:bg-muted/50',
+                    )}
                        onClick={() => setAnswers(prev => ({ ...prev, [question.questionId]: opt.index }))}>
                     <RadioGroupItem value={String(opt.index)} id={`${question.questionId}-${opt.index}`} className="mt-1" />
                     <Label htmlFor={`${question.questionId}-${opt.index}`} className="font-normal font-sinhala text-base cursor-pointer flex-1">
@@ -488,17 +513,17 @@ export function QuizAttempt() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Free Navigation */}
-      <div className="flex items-center justify-between gap-3">
-        <Button variant="outline" onClick={() => goTo(safeIndex - 1)} disabled={safeIndex === 0}>
+      {/* Free navigation — pinned to the bottom of the screen, within thumb reach */}
+      <div className="sticky bottom-0 z-20 -mx-4 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur md:-mx-6 md:px-6">
+        <Button variant="outline" size="lg" className="h-11 flex-1 sm:flex-none" onClick={() => goTo(safeIndex - 1)} disabled={safeIndex === 0}>
           <ChevronLeft className="w-4 h-4" /> Previous
         </Button>
         {isLastQuestion ? (
-          <Button size="lg" onClick={() => setPhase('review')}>
-            Finish attempt
+          <Button size="lg" className="h-11 flex-1 sm:flex-none" onClick={() => setPhase('review')}>
+            Review & finish
           </Button>
         ) : (
-          <Button onClick={() => goTo(safeIndex + 1)}>
+          <Button size="lg" className="h-11 flex-1 sm:flex-none" onClick={() => goTo(safeIndex + 1)}>
             Next <ChevronRight className="w-4 h-4" />
           </Button>
         )}

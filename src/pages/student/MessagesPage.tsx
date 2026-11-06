@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Mail, Send, X } from 'lucide-react';
+import { Mail, Send, X, ChevronLeft } from 'lucide-react';
 import { GroupBadge } from '../../components/GroupBadge';
 import { groupToggleClasses } from '../../lib/groupColors';
 import { motion } from 'motion/react';
+import { cn } from '../../lib/utils';
 
 const GROUPS = [
   'ALL', '2028-GINIGATHHENA', '2028-HATTON', '2028-NAWALAPITIYA', '2028-ONLINE',
@@ -98,8 +99,8 @@ export function MessagesPage({ role }: MessagesPageProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-6">
-        {/* Message list */}
-        <Card>
+        {/* Message list — on phones, hidden while a message is open */}
+        <Card className={cn(selected && 'hidden md:flex')}>
           <CardHeader className="border-b border-border">
             <CardTitle className="text-base">Inbox</CardTitle>
           </CardHeader>
@@ -113,7 +114,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
               <div className="stagger divide-y divide-border">
                 {(data ?? []).map(msg => (
                   <button key={msg.messageId}
-                    onClick={() => setSelected(msg)}
+                    onClick={() => { setSelected(msg); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     className={`w-full text-left p-4 hover:bg-muted/40 transition-colors ${selected?.messageId === msg.messageId ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}>
                     <p className="font-medium text-sm line-clamp-1">{msg.subject}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{msg.body}</p>
@@ -127,9 +128,14 @@ export function MessagesPage({ role }: MessagesPageProps) {
           </CardContent>
         </Card>
 
-        {/* Message detail */}
-        <Card>
-          <CardContent className="p-6">
+        {/* Message detail — on phones, shown full-width with a back button */}
+        <Card className={cn(!selected && 'hidden md:flex')}>
+          <CardContent className="p-5 sm:p-6">
+            {selected && (
+              <Button variant="ghost" size="sm" className="-ml-2 mb-3 md:hidden" onClick={() => setSelected(null)}>
+                <ChevronLeft /> Inbox
+              </Button>
+            )}
             {!selected ? (
               <div className="py-16 text-center text-muted-foreground">
                 <Mail className="mx-auto mb-3 h-8 w-8 opacity-30" />
@@ -138,7 +144,7 @@ export function MessagesPage({ role }: MessagesPageProps) {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold">{selected.subject}</h2>
+                  <h2 className="text-lg font-semibold sm:text-xl">{selected.subject}</h2>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selected.targetGroups.map(g => (
                       <GroupBadge key={g} group={g} />
