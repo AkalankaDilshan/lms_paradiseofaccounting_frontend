@@ -35,17 +35,18 @@ export function ThemeProvider({
 
     root.classList.remove("light", "dark")
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
+    const resolved =
+      theme === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : theme
 
-      root.classList.add(systemTheme)
-      return
-    }
-
-    root.classList.add(theme)
+    root.classList.add(resolved)
+    // Keep the phone's status bar / browser chrome in step with the theme.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", resolved === "dark" ? "#0a0a0c" : "#ffffff")
   }, [theme])
 
   const value = {

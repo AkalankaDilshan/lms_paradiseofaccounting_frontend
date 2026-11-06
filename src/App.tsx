@@ -174,7 +174,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="lms-theme">
+    <ThemeProvider defaultTheme="system" storageKey="lms-theme">
       <JotaiProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
